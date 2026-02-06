@@ -28,10 +28,7 @@ jobs:
         cache-dependency-path: ${{ matrix.project }}/package-lock.json
 
     - name: Configure npm registry
-      run: |
-        npm config set registry https://registry.npmjs.org/
-        npm config set //registry.npmjs.org/:_authToken ${{ secrets.NPM_TOKEN || secrets.GITHUB_TOKEN }}
-        npm config set always-auth true
+      run: npm config set //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
 
     - name: Install dependencies
       run: |
@@ -53,7 +50,7 @@ jobs:
       env:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       with:
-        args: --severity-threshold=high --fail-on=upgradable --sarif-file-output=snyk.sarif.json --file=${{ matrix.project }}/package.json
+        args: --sarif-file-output=snyk.sarif.json --file=${{ matrix.project }}/package.json
       continue-on-error: true
 
     - name: Upload Snyk results to GitHub Code Scanning
