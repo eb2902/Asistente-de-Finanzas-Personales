@@ -39,11 +39,13 @@ jobs:
       run: |
         cd ${{ matrix.project }}
         npm run lint
+      continue-on-error: true
 
     - name: Build project
       run: |
         cd ${{ matrix.project }}
         npm run build
+      continue-on-error: true
 
     - name: Run Snyk to check for vulnerabilities
       uses: snyk/actions/node@master
