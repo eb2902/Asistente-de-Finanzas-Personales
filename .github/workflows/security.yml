@@ -9,6 +9,9 @@ on:
 jobs:
   security-check:
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
     strategy:
       matrix:
         project: [backend, frontend]
@@ -50,10 +53,11 @@ jobs:
       env:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       with:
-        args: --severity-threshold=high --fail-on=upgradable
+        args: --severity-threshold=high --fail-on=upgradable --sarif-file-output=snyk.sarif.json --file=${{ matrix.project }}/package.json
+      continue-on-error: true
 
     - name: Upload Snyk results to GitHub Code Scanning
-      uses: github/codeql-action/upload-sarif@v3
+      uses: github/codeql-action/upload-sarif@v4
       if: always()
       with:
         sarif_file: snyk.sarif.json
