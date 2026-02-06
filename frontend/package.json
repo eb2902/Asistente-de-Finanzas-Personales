@@ -1,0 +1,49 @@
+{
+  "name": "asistente-finanzas-frontend",
+  "version": "1.0.0",
+  "description": "Frontend React application for Intelligent Finance Manager",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "docker:build": "docker build -t asistente-finanzas-frontend .",
+    "docker:run": "docker run -p 3000:3000 asistente-finanzas-frontend"
+  },
+  "keywords": [
+    "finance",
+    "react",
+    "typescript",
+    "frontend",
+    "dashboard"
+  ],
+  "author": "Senior Software Engineer",
+  "license": "MIT",
+  "dependencies": {
+    "next": "14.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "axios": "^1.6.7",
+    "react-hook-form": "^7.49.3",
+    "react-query": "^3.39.3",
+    "react-router-dom": "^6.21.1",
+    "lucide-react": "^0.294.0",
+    "clsx": "^2.0.0",
+    "tailwind-merge": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "@types/react": "^18.2.56",
+    "@types/react-dom": "^18.2.19",
+    "@types/lucide-react": "^0.294.0",
+    "typescript": "^5.4.2",
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.34",
+    "tailwindcss": "^3.4.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
