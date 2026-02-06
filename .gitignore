@@ -34,6 +34,9 @@ out
 .env.*.local
 .env.example
 
+# NPM configuration (if contains secrets)
+.npmrc
+
 # Build outputs
 build
 coverage
