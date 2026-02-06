@@ -321,19 +321,3 @@ docker-compose logs -f
 ## 📄 Licencia
 
 Este proyecto está bajo la Licencia MIT. Revisa el archivo [LICENSE](LICENSE) para más detalles.
-
-## 🙏 Agradecimientos
-
-- **Comunidad Open Source** por las increíbles herramientas que hacen posible este proyecto
-- **TypeScript** por traer tipado seguro al desarrollo web
-- **Docker** por simplificar el despliegue y la infraestructura
-
-## 📞 Contacto
-
-¿Tienes preguntas o sugerencias? 
-- Crea un issue en el repositorio
-- Envía un email a: support@asistentefinanciero.com
-
----
-
-**Hecho con ❤️ para ayudarte a tomar el control de tus finanzas**
