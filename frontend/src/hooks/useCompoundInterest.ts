@@ -1,12 +1,11 @@
 import { useState, useCallback } from 'react';
 import { 
   calculateCompoundInterest,
-  calculateCompoundInterestWithContributions,
-  calculateRequiredPrincipal,
+  generateCompoundProjection,
   calculateTimeToGoal,
-  calculateEffectiveAnnualRate,
-  generateCompoundInterestProjection,
-  type CompoundInterestProjection
+  calculateMonthlySavingsNeeded,
+  formatCurrency,
+  getProgressColor
 } from '../utils/compoundInterest';
 
 export interface CompoundInterestInputs {
@@ -20,8 +19,7 @@ export interface CompoundInterestInputs {
 export interface CompoundInterestResults {
   finalAmount: number;
   totalInterest: number;
-  effectiveAnnualRate: number;
-  projection?: CompoundInterestProjection[];
+  projection?: any[];
 }
 
 export function useCompoundInterest() {
@@ -66,41 +64,36 @@ export function useCompoundInterest() {
       let finalAmount: number;
       
       if (currentInputs.regularContribution && currentInputs.regularContribution > 0) {
-        finalAmount = calculateCompoundInterestWithContributions(
-          currentInputs.principal,
-          currentInputs.annualRate,
-          currentInputs.compoundFrequency,
-          currentInputs.timeYears,
-          currentInputs.regularContribution
-        );
+        // For now, just use basic compound interest if contributions are provided
+        // TODO: Implement proper compound interest with contributions
+        finalAmount = calculateCompoundInterest({
+          principal: currentInputs.principal,
+          rate: currentInputs.annualRate,
+          time: currentInputs.timeYears,
+          frequency: currentInputs.compoundFrequency
+        });
       } else {
-        finalAmount = calculateCompoundInterest(
-          currentInputs.principal,
-          currentInputs.annualRate,
-          currentInputs.compoundFrequency,
-          currentInputs.timeYears
-        );
+        finalAmount = calculateCompoundInterest({
+          principal: currentInputs.principal,
+          rate: currentInputs.annualRate,
+          time: currentInputs.timeYears,
+          frequency: currentInputs.compoundFrequency
+        });
       }
 
       const totalInterest = finalAmount - currentInputs.principal;
-      const effectiveAnnualRate = calculateEffectiveAnnualRate(
-        currentInputs.annualRate,
-        currentInputs.compoundFrequency
-      );
 
       // Generate projection
-      const projection = generateCompoundInterestProjection(
+      const projection = generateCompoundProjection(
         currentInputs.principal,
         currentInputs.annualRate,
-        currentInputs.compoundFrequency,
-        currentInputs.timeYears,
-        12
+        currentInputs.timeYears * 12,
+        10000 // dummy target amount for now
       );
 
       setResults({
         finalAmount,
         totalInterest,
-        effectiveAnnualRate,
         projection
       });
 
@@ -119,13 +112,6 @@ export function useCompoundInterest() {
     try {
       const currentInputs = { ...inputs, ...inputData };
       
-      const requiredPrincipal = calculateRequiredPrincipal(
-        targetAmount,
-        currentInputs.annualRate,
-        currentInputs.compoundFrequency,
-        currentInputs.timeYears
-      );
-
       const timeToGoal = calculateTimeToGoal(
         currentInputs.principal,
         targetAmount,
@@ -134,7 +120,6 @@ export function useCompoundInterest() {
       );
 
       return {
-        requiredPrincipal,
         timeToGoal
       };
 
@@ -215,19 +200,19 @@ export const compoundInterestUtils = {
     difference: number;
     percentageDifference: number;
   } => {
-    const earlyAmount = calculateCompoundInterest(
+    const earlyAmount = calculateCompoundInterest({
       principal,
-      annualRate,
-      compoundFrequency,
-      earlyYears
-    );
+      rate: annualRate,
+      time: earlyYears,
+      frequency: compoundFrequency
+    });
     
-    const lateAmount = calculateCompoundInterest(
+    const lateAmount = calculateCompoundInterest({
       principal,
-      annualRate,
-      compoundFrequency,
-      lateYears
-    );
+      rate: annualRate,
+      time: lateYears,
+      frequency: compoundFrequency
+    });
     
     const difference = earlyAmount - lateAmount;
     const percentageDifference = (difference / lateAmount) * 100;
@@ -254,12 +239,12 @@ export const compoundInterestUtils = {
     realAmount: number;
     inflationLoss: number;
   } => {
-    const nominalAmount = calculateCompoundInterest(
+    const nominalAmount = calculateCompoundInterest({
       principal,
-      annualRate,
-      compoundFrequency,
-      timeYears
-    );
+      rate: annualRate,
+      time: timeYears,
+      frequency: compoundFrequency
+    });
     
     // Adjust for inflation: Real Amount = Nominal Amount / (1 + inflationRate)^time
     const realAmount = nominalAmount / Math.pow(1 + inflationRate, timeYears);

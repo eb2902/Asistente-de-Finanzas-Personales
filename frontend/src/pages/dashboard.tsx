@@ -70,7 +70,7 @@ const Dashboard: React.FC = () => {
     ? data.goalProjections 
     : data.goalProjections; // Para este ejemplo, mostramos las mismas proyecciones
 
-  const selectedGoalData = data.goals.find(g => g.id === selectedGoal);
+  const selectedGoalData = data.goals.find((g: any) => g.id === selectedGoal);
 
   return (
     <div className="min-h-screen bg-gray-900">
@@ -121,7 +121,7 @@ const Dashboard: React.FC = () => {
                     style: 'currency',
                     currency: 'USD',
                     minimumFractionDigits: 0,
-                  }).format(data.cashFlow.reduce((sum, item) => sum + item.income, 0))}
+                  }).format(data.cashFlow.reduce((sum: number, item: any) => sum + item.income, 0))}
                 </span>
               </div>
               <div className="flex justify-between items-center">
@@ -131,20 +131,20 @@ const Dashboard: React.FC = () => {
                     style: 'currency',
                     currency: 'USD',
                     minimumFractionDigits: 0,
-                  }).format(data.cashFlow.reduce((sum, item) => sum + item.expense, 0))}
+                  }).format(data.cashFlow.reduce((sum: number, item: any) => sum + item.expense, 0))}
                 </span>
               </div>
               <div className="flex justify-between items-center pt-2 border-t border-gray-600">
                 <span className="text-gray-400">Flujo Neto</span>
                 <span className={`font-semibold ${
-                  data.cashFlow.reduce((sum, item) => sum + item.income - item.expense, 0) >= 0 
+                  data.cashFlow.reduce((sum: number, item: any) => sum + item.income - item.expense, 0) >= 0 
                     ? 'text-green-400' : 'text-red-400'
                 }`}>
                   {new Intl.NumberFormat('es-ES', {
                     style: 'currency',
                     currency: 'USD',
                     minimumFractionDigits: 0,
-                  }).format(data.cashFlow.reduce((sum, item) => sum + item.income - item.expense, 0))}
+                  }).format(data.cashFlow.reduce((sum: number, item: any) => sum + item.income - item.expense, 0))}
                 </span>
               </div>
             </div>
@@ -169,9 +169,9 @@ const Dashboard: React.FC = () => {
               data={displayData}
               goalName={selectedGoalData?.name || 'Todas las Metas'}
               currentAmount={selectedGoalData?.currentAmount || 
-                data.goals.reduce((sum, g) => sum + g.currentAmount, 0)}
+                data.goals.reduce((sum: number, g: any) => sum + g.currentAmount, 0)}
               targetAmount={selectedGoalData?.targetAmount || 
-                data.goals.reduce((sum, g) => sum + g.targetAmount, 0)}
+                data.goals.reduce((sum: number, g: any) => sum + g.targetAmount, 0)}
               height={400}
               showTooltips={true}
               showLegend={true}
@@ -196,7 +196,7 @@ const Dashboard: React.FC = () => {
             <div className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
               <h3 className="text-lg font-semibold text-white mb-4">Transacciones Recientes</h3>
               <div className="space-y-3">
-                {data.recentTransactions.map((transaction) => (
+                {data.recentTransactions.map((transaction: any) => (
                   <div
                     key={transaction.id}
                     className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg border border-gray-600 hover:border-gray-500 transition-all duration-200"

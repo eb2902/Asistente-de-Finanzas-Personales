@@ -12,18 +12,22 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
   dateRange,
   onDateRangeChange,
 }) => {
-  const handleStartDateChange = (date: Date) => {
-    onDateRangeChange({
-      ...dateRange,
-      startDate: date,
-    });
+  const handleStartDateChange = (date: Date | null) => {
+    if (date) {
+      onDateRangeChange({
+        ...dateRange,
+        startDate: date,
+      });
+    }
   };
 
-  const handleEndDateChange = (date: Date) => {
-    onDateRangeChange({
-      ...dateRange,
-      endDate: date,
-    });
+  const handleEndDateChange = (date: Date | null) => {
+    if (date) {
+      onDateRangeChange({
+        ...dateRange,
+        endDate: date,
+      });
+    }
   };
 
   return (
