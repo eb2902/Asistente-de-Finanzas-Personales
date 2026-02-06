@@ -6,10 +6,15 @@ import dotenv from 'dotenv';
 
 // Import routes
 import authRoutes from './routes/auth.routes';
+import transactionRoutes from './routes/transactions.routes';
 import { initializeDatabase } from './config/database';
+import { validateEnvironmentAtStartup } from './middleware/env-validation.middleware';
 
 // Load environment variables
 dotenv.config();
+
+// Validate environment variables at startup
+validateEnvironmentAtStartup();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -26,6 +31,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/transactions', transactionRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

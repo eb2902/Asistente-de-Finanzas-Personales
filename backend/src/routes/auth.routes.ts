@@ -22,16 +22,17 @@ const loginSchema = Joi.object({
  * @desc    Register a new user
  * @access  Public
  */
-router.post('/register', async (req: Request, res: Response) => {
+router.post('/register', async (req: Request, res: Response): Promise<void> => {
   try {
     // Validate request body
     const { error, value } = registerSchema.validate(req.body);
     
     if (error) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Validación fallida',
         details: error.details.map(detail => detail.message)
       });
+      return;
     }
 
     const { email, password, name } = value;
@@ -59,16 +60,17 @@ router.post('/register', async (req: Request, res: Response) => {
  * @desc    Login user
  * @access  Public
  */
-router.post('/login', async (req: Request, res: Response) => {
+router.post('/login', async (req: Request, res: Response): Promise<void> => {
   try {
     // Validate request body
     const { error, value } = loginSchema.validate(req.body);
     
     if (error) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Validación fallida',
         details: error.details.map(detail => detail.message)
       });
+      return;
     }
 
     const { email, password } = value;
@@ -96,13 +98,14 @@ router.post('/login', async (req: Request, res: Response) => {
  * @desc    Get user profile
  * @access  Private
  */
-router.get('/profile', authenticateToken, async (req: AuthRequest, res: Response) => {
+router.get('/profile', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Usuario no autenticado'
       });
+      return;
     }
 
     const user = await AuthService.getProfile(req.user.id);
@@ -126,13 +129,14 @@ router.get('/profile', authenticateToken, async (req: AuthRequest, res: Response
  * @desc    Refresh JWT token
  * @access  Private
  */
-router.post('/refresh', authenticateToken, async (req: AuthRequest, res: Response) => {
+router.post('/refresh', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Usuario no autenticado'
       });
+      return;
     }
 
     const result = await AuthService.refreshToken(req.user.id);
