@@ -1,91 +1,198 @@
 version: '3.8'
 
+# Definición de servicios, redes y volúmenes
 services:
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
     container_name: asistente_finanzas_postgres
     restart: unless-stopped
+    
+    # Configuración de entorno
     environment:
-      POSTGRES_DB: asistente_finanzas_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres_password_123
+      POSTGRES_DB: ${POSTGRES_DB:-asistente_finanzas_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_password_123}
+    
+    # Configuración de volúmenes para persistencia de datos
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+    
+    # Configuración de puertos
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
+    
+    # Configuración de red
     networks:
       - asistente_finanzas_network
+    
+    # Health check para PostgreSQL
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-asistente_finanzas_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    
+    # Configuración de recursos
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
 
   # Backend API
   backend:
     build:
       context: ./backend
       dockerfile: ../docker/backend.Dockerfile
+      target: production
     container_name: asistente_finanzas_backend
     restart: unless-stopped
+    
+    # Configuración de entorno
     environment:
       NODE_ENV: production
       PORT: 3001
-      DATABASE_URL: postgresql://postgres:postgres_password_123@postgres:5432/asistente_finanzas_db
-      JWT_SECRET: your_jwt_secret_key_here_change_in_production
-      JWT_EXPIRES_IN: 24h
-      BCRYPT_ROUNDS: 12
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_password_123}@postgres:5432/${POSTGRES_DB:-asistente_finanzas_db}
+      JWT_SECRET: ${JWT_SECRET:-your_jwt_secret_key_here_change_in_production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+      BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-12}
+    
+    # Configuración de volúmenes (solo para desarrollo, en producción no se necesita)
     volumes:
-      - ./backend:/app
       - /app/node_modules
+    
+    # Configuración de puertos (solo para desarrollo/debug)
     ports:
-      - "3001:3001"
+      - "${BACKEND_PORT:-3001}:3001"
+    
+    # Dependencias y health check
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "const http = require('http'); const options = { hostname: 'localhost', port: 3001, path: '/api/health', method: 'GET' }; const req = http.request(options, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); req.on('error', () => process.exit(1)); req.end();"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
+    # Configuración de red
     networks:
       - asistente_finanzas_network
+    
+    # Configuración de recursos
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
 
   # Frontend Application
   frontend:
     build:
       context: ./frontend
       dockerfile: ../docker/frontend.Dockerfile
+      target: runner
     container_name: asistente_finanzas_frontend
     restart: unless-stopped
+    
+    # Configuración de entorno
     environment:
       NODE_ENV: production
       PORT: 3000
-      NEXT_PUBLIC_API_URL: http://localhost:3001
+      NEXT_PUBLIC_API_URL: http://backend:3001
+      # Variables para desarrollo
+      HOST: 0.0.0.0
+      ALLOW_ORIGIN: '*'
+    
+    # Configuración de volúmenes (solo para desarrollo, en producción no se necesita)
     volumes:
-      - ./frontend:/app
       - /app/node_modules
+      - /app/.next/cache
+    
+    # Configuración de puertos
     ports:
-      - "3000:3000"
+      - "${FRONTEND_PORT:-3000}:3000"
+    
+    # Dependencias y health check
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "const http = require('http'); const options = { hostname: 'localhost', port: 3000, path: '/', method: 'GET' }; const req = http.request(options, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); req.on('error', () => process.exit(1)); req.end();"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
+    # Configuración de red
     networks:
       - asistente_finanzas_network
+    
+    # Configuración de recursos
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
 
   # Optional: pgAdmin for database management
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: asistente_finanzas_pgadmin
     restart: unless-stopped
+    
+    # Configuración de entorno
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@example.com
-      PGADMIN_DEFAULT_PASSWORD: admin_password_123
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin_password_123}
+    
+    # Configuración de volúmenes
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+    
+    # Configuración de puertos
     ports:
-      - "5050:80"
+      - "${PGADMIN_PORT:-5050}:80"
+    
+    # Dependencias
     depends_on:
       - postgres
+    
+    # Configuración de red
     networks:
       - asistente_finanzas_network
+    
+    # Configuración de recursos
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
 
+# Definición de volúmenes
 volumes:
   postgres_data:
     driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${POSTGRES_DATA_PATH:-./data/postgres}
+  
   pgadmin_data:
     driver: local
 
+# Definición de redes
 networks:
   asistente_finanzas_network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

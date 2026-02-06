@@ -1,0 +1,71 @@
+# Docker Compose override file for development
+# This file extends the main docker-compose.yml with development-specific configurations
+version: '3.8'
+
+services:
+  # Backend API - Development Configuration
+  backend:
+    # Mount source code for hot reloading
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    
+    # Development environment
+    environment:
+      NODE_ENV: development
+      DEBUG: "app:*"
+    
+    # Development ports
+    ports:
+      - "${BACKEND_PORT:-3001}:3001"
+      - "9229:9229"  # Node.js debugging port
+    
+    # Disable health check for development (faster startup)
+    healthcheck:
+      disable: true
+    
+    # Development command (nodemon for hot reloading)
+    command: ["npm", "run", "dev"]
+
+  # Frontend Application - Development Configuration
+  frontend:
+    # Mount source code for hot reloading
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next/cache
+    
+    # Development environment
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      HOST: 0.0.0.0
+      ALLOW_ORIGIN: '*'
+    
+    # Development ports
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    
+    # Disable health check for development (faster startup)
+    healthcheck:
+      disable: true
+    
+    # Development command
+    command: ["npm", "run", "dev"]
+
+  # PostgreSQL - Development Configuration
+  postgres:
+    # Development ports (exposed for external access)
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    
+    # Disable health check for development (faster startup)
+    healthcheck:
+      disable: true
+    
+    # Additional environment for development
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-asistente_finanzas_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_password_123}
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
