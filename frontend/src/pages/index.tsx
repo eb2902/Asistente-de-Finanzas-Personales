@@ -1,4 +1,3 @@
-import { GetServerSideProps } from 'next';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/router';
 import Head from 'next/head';

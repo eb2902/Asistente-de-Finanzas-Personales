@@ -19,6 +19,60 @@ interface CashFlowChartProps {
   showLegend?: boolean;
 }
 
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: {
+    payload: {
+      date: string;
+      income: number;
+      expense: number;
+      net: number;
+    };
+  }[];
+  label?: string;
+}
+
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const dataPoint = payload[0].payload;
+    
+    const formatCurrency = (value: number) => {
+      return new Intl.NumberFormat('es-ES', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+      }).format(value);
+    };
+
+    const formatDate = (date: string) => {
+      return new Date(date).toLocaleDateString('es-ES', {
+        month: 'short',
+        day: 'numeric',
+      });
+    };
+    
+    return (
+      <div className="bg-gray-900 border border-gray-700 p-3 rounded-lg shadow-lg">
+        <p className="text-sm text-gray-300 mb-2">{formatDate(dataPoint.date)}</p>
+        <div className="space-y-1">
+          <p className="text-green-400 text-sm">
+            Ingresos: {formatCurrency(dataPoint.income)}
+          </p>
+          <p className="text-red-400 text-sm">
+            Gastos: {formatCurrency(dataPoint.expense)}
+          </p>
+          <p className={`text-sm font-semibold ${
+            dataPoint.net >= 0 ? 'text-green-400' : 'text-red-400'
+          }`}>
+            Neto: {formatCurrency(dataPoint.net)}
+          </p>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 const CashFlowChart: React.FC<CashFlowChartProps> = ({
   data,
   height = 400,
@@ -51,31 +105,6 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
     });
   };
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      const dataPoint = payload[0].payload;
-      
-      return (
-        <div className="bg-gray-900 border border-gray-700 p-3 rounded-lg shadow-lg">
-          <p className="text-sm text-gray-300 mb-2">{formatDate(dataPoint.date)}</p>
-          <div className="space-y-1">
-            <p className="text-green-400 text-sm">
-              Ingresos: {formatCurrency(dataPoint.income)}
-            </p>
-            <p className="text-red-400 text-sm">
-              Gastos: {formatCurrency(dataPoint.expense)}
-            </p>
-            <p className={`text-sm font-semibold ${
-              dataPoint.net >= 0 ? 'text-green-400' : 'text-red-400'
-            }`}>
-              Neto: {formatCurrency(dataPoint.net)}
-            </p>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <div className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
@@ -106,7 +135,7 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
             <Legend 
               verticalAlign="top" 
               height={36}
-              formatter={(value, entry) => (
+              formatter={(value) => (
                 <span className="text-gray-300">{value}</span>
               )}
             />

@@ -15,7 +15,6 @@ import {
 } from 'recharts';
 import { GoalProjectionData } from '../../interfaces/financial';
 import { 
-  generateCompoundProjection, 
   formatCurrency, 
   getProgressColor 
 } from '../../utils/compoundInterest';
@@ -31,6 +30,50 @@ interface GoalProjectionChartProps {
   showScatter?: boolean;
 }
 
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: {
+    payload: {
+      month: string;
+      amount: number;
+      target: number;
+    };
+  }[];
+  label?: string;
+}
+
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const dataPoint = payload[0].payload;
+    
+    const formatCurrency = (value: number) => {
+      return new Intl.NumberFormat('es-ES', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+      }).format(value);
+    };
+    
+    return (
+      <div className="bg-gray-900 border border-gray-700 p-3 rounded-lg shadow-lg">
+        <p className="text-sm text-gray-300 mb-2">{dataPoint.month}</p>
+        <div className="space-y-1">
+          <p className="text-blue-400 text-sm">
+            Proyección: {formatCurrency(dataPoint.amount)}
+          </p>
+          <p className="text-purple-400 text-sm">
+            Meta: {formatCurrency(dataPoint.target)}
+          </p>
+          <p className="text-sm font-semibold text-white">
+            Progreso: {((dataPoint.amount / dataPoint.target) * 100).toFixed(1)}%
+          </p>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 const GoalProjectionChart: React.FC<GoalProjectionChartProps> = ({
   data,
   goalName,
@@ -45,38 +88,6 @@ const GoalProjectionChart: React.FC<GoalProjectionChartProps> = ({
   const lastMonthData = data[data.length - 1];
   const progressPercentage = (lastMonthData.amount / targetAmount) * 100;
   const timeToGoal = data.length; // Meses proyectados
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('es-ES', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-    }).format(value);
-  };
-
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      const dataPoint = payload[0].payload;
-      
-      return (
-        <div className="bg-gray-900 border border-gray-700 p-3 rounded-lg shadow-lg">
-          <p className="text-sm text-gray-300 mb-2">{dataPoint.month}</p>
-          <div className="space-y-1">
-            <p className="text-blue-400 text-sm">
-              Proyección: {formatCurrency(dataPoint.amount)}
-            </p>
-            <p className="text-purple-400 text-sm">
-              Meta: {formatCurrency(dataPoint.target)}
-            </p>
-            <p className="text-sm font-semibold text-white">
-              Progreso: {((dataPoint.amount / dataPoint.target) * 100).toFixed(1)}%
-            </p>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
 
   const renderChart = () => {
     if (showScatter) {
@@ -99,7 +110,7 @@ const GoalProjectionChart: React.FC<GoalProjectionChartProps> = ({
             <Legend 
               verticalAlign="top" 
               height={36}
-              formatter={(value, entry) => (
+              formatter={(value) => (
                 <span className="text-gray-300">{value}</span>
               )}
             />
@@ -141,7 +152,7 @@ const GoalProjectionChart: React.FC<GoalProjectionChartProps> = ({
           <Legend 
             verticalAlign="top" 
             height={36}
-            formatter={(value, entry) => (
+            formatter={(value) => (
               <span className="text-gray-300">{value}</span>
             )}
           />

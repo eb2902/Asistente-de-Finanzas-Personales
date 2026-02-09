@@ -39,7 +39,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   setSelectedGoal: (goalId) => set({ selectedGoal: goalId }),
 
   fetchDashboardData: async () => {
-    set({ loading: true, error: null });
+    set({ loading: true });
     try {
       // Simulación de llamada API
       const mockData: DashboardData = {
@@ -112,7 +112,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       };
 
       set({ data: mockData, loading: false });
-    } catch (error) {
+    } catch {
       set({ error: 'Error al cargar los datos del dashboard', loading: false });
     }
   },

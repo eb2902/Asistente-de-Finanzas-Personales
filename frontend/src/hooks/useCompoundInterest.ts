@@ -2,10 +2,7 @@ import { useState, useCallback } from 'react';
 import { 
   calculateCompoundInterest,
   generateCompoundProjection,
-  calculateTimeToGoal,
-  calculateMonthlySavingsNeeded,
-  formatCurrency,
-  getProgressColor
+  calculateTimeToGoal
 } from '../utils/compoundInterest';
 
 export interface CompoundInterestInputs {
@@ -19,7 +16,17 @@ export interface CompoundInterestInputs {
 export interface CompoundInterestResults {
   finalAmount: number;
   totalInterest: number;
-  projection?: any[];
+  projection?: {
+    month: string;
+    amount: number;
+    target: number;
+  }[];
+}
+
+export interface CompoundProjectionData {
+  month: string;
+  amount: number;
+  target: number;
 }
 
 export function useCompoundInterest() {
@@ -89,7 +96,7 @@ export function useCompoundInterest() {
         currentInputs.annualRate,
         currentInputs.timeYears * 12,
         10000 // dummy target amount for now
-      );
+      ) as CompoundProjectionData[];
 
       setResults({
         finalAmount,
@@ -143,7 +150,7 @@ export function useCompoundInterest() {
     setError(null);
   }, []);
 
-  const updateInput = useCallback((field: keyof CompoundInterestInputs, value: any) => {
+  const updateInput = useCallback((field: keyof CompoundInterestInputs, value: number | string) => {
     setInputs(prev => ({
       ...prev,
       [field]: value
@@ -164,27 +171,6 @@ export function useCompoundInterest() {
 
 // Utility functions for common calculations
 export const compoundInterestUtils = {
-  /**
-   * Calculate how much you need to invest monthly to reach a goal
-   */
-  calculateMonthlyContribution: (
-    principal: number,
-    targetAmount: number,
-    annualRate: number,
-    years: number
-  ): number => {
-    // This is a simplified calculation
-    // In reality, you'd need to solve for PMT in the future value formula
-    const totalNeeded = targetAmount - principal;
-    const monthlyRate = annualRate / 12;
-    const totalMonths = years * 12;
-    
-    // Approximate calculation
-    const monthlyContribution = totalNeeded / (totalMonths * (1 + monthlyRate) ** totalMonths);
-    
-    return Math.max(0, Math.round(monthlyContribution * 100) / 100);
-  },
-
   /**
    * Calculate the impact of starting early vs late
    */

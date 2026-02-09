@@ -1,4 +1,4 @@
-import { GetServerSideProps } from 'next';
+import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';

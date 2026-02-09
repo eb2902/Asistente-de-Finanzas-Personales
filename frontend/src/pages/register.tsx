@@ -1,4 +1,4 @@
-import { GetServerSideProps } from 'next';
+import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
@@ -14,17 +14,12 @@ export default function Register() {
     confirmPassword: ''
   });
   const [error, setError] = useState('');
-  const [passwordsMatch, setPasswordsMatch] = useState(true);
 
   useEffect(() => {
     if (isAuthenticated) {
       router.push('/dashboard');
     }
   }, [isAuthenticated, router]);
-
-  useEffect(() => {
-    setPasswordsMatch(formData.password === formData.confirmPassword);
-  }, [formData.password, formData.confirmPassword]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +30,7 @@ export default function Register() {
       return;
     }
 
-    if (!passwordsMatch) {
+    if (formData.password !== formData.confirmPassword) {
       setError('Las contraseñas no coinciden');
       return;
     }
@@ -154,21 +149,18 @@ export default function Register() {
                   type="password"
                   autoComplete="new-password"
                   required
-                  className={`input-field ${!passwordsMatch && formData.confirmPassword ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''}`}
+                  className="input-field"
                   placeholder="Confirma tu contraseña"
                   value={formData.confirmPassword}
                   onChange={handleChange}
                 />
-                {!passwordsMatch && formData.confirmPassword && (
-                  <p className="mt-2 text-sm text-red-600">Las contraseñas no coinciden</p>
-                )}
               </div>
             </div>
 
             <div>
               <button
                 type="submit"
-                disabled={loading || !passwordsMatch}
+                disabled={loading}
                 className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
               >
                 {loading ? (
