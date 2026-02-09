@@ -4,6 +4,7 @@ import { Transaction } from '../models/Transaction';
 import { User } from '../models/User';
 import { NLPCategorizationService } from '../services/nlp.service';
 import Joi from 'joi';
+import logger from '../utils/logger';
 
 // Validation schemas
 const createTransactionSchema = Joi.object({
@@ -37,7 +38,7 @@ export class TransactionsController {
       }
 
       const { description, amount, type, merchant } = value;
-      const userId = (req as any).user.id; // From auth middleware
+      const userId = (req as { user?: { id: string } }).user?.id; // From auth middleware
 
       // Check if user exists
       const userRepository = getRepository(User);
@@ -76,7 +77,7 @@ export class TransactionsController {
           transaction.category = categorization.category;
           transaction.confidence = categorization.confidence;
         } catch (error) {
-          console.error('Categorization failed:', error);
+          logger.error('Categorization failed:', error);
           // Continue without categorization
           transaction.category = 'Otros';
           transaction.confidence = 0.5;
@@ -98,7 +99,7 @@ export class TransactionsController {
       });
 
     } catch (error) {
-      console.error('Error creating transaction:', error);
+      logger.error('Error creating transaction:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
@@ -111,7 +112,7 @@ export class TransactionsController {
    */
   async getUserTransactions(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as { user?: { id: string } }).user?.id;
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
       const offset = (page - 1) * limit;
@@ -138,7 +139,7 @@ export class TransactionsController {
       });
 
     } catch (error) {
-      console.error('Error getting transactions:', error);
+      logger.error('Error getting transactions:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
@@ -152,7 +153,7 @@ export class TransactionsController {
   async getTransactionById(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const userId = (req as any).user.id;
+      const userId = (req as { user?: { id: string } }).user?.id;
 
       const transactionRepository = getRepository(Transaction);
       const transaction = await transactionRepository.findOne({
@@ -173,7 +174,7 @@ export class TransactionsController {
       });
 
     } catch (error) {
-      console.error('Error getting transaction:', error);
+      logger.error('Error getting transaction:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
@@ -187,7 +188,7 @@ export class TransactionsController {
   async updateTransaction(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const userId = (req as any).user.id;
+      const userId = (req as { user?: { id: string } }).user?.id;
 
       // Validate input
       const { error, value } = createTransactionSchema.validate(req.body);
@@ -226,7 +227,7 @@ export class TransactionsController {
           transaction.category = categorization.category;
           transaction.confidence = categorization.confidence;
         } catch (error) {
-          console.error('Re-categorization failed:', error);
+          logger.error('Re-categorization failed:', error);
           // Keep existing category
         }
       }
@@ -251,7 +252,7 @@ export class TransactionsController {
       });
 
     } catch (error) {
-      console.error('Error updating transaction:', error);
+      logger.error('Error updating transaction:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
@@ -265,7 +266,7 @@ export class TransactionsController {
   async deleteTransaction(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const userId = (req as any).user.id;
+      const userId = (req as { user?: { id: string } }).user?.id;
 
       const transactionRepository = getRepository(Transaction);
       const result = await transactionRepository.delete({
@@ -287,7 +288,7 @@ export class TransactionsController {
       });
 
     } catch (error) {
-      console.error('Error deleting transaction:', error);
+      logger.error('Error deleting transaction:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
@@ -320,7 +321,7 @@ export class TransactionsController {
       });
 
     } catch (error) {
-      console.error('Error categorizing transaction:', error);
+      logger.error('Error categorizing transaction:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
@@ -333,7 +334,7 @@ export class TransactionsController {
    */
   async getTransactionStats(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as { user?: { id: string } }).user?.id;
       const transactionRepository = getRepository(Transaction);
 
       // Get total income and expenses
@@ -376,7 +377,7 @@ export class TransactionsController {
       });
 
     } catch (error) {
-      console.error('Error getting transaction stats:', error);
+      logger.error('Error getting transaction stats:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'

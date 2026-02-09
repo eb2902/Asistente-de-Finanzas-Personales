@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import logger from '../utils/logger';
 
 /**
  * Middleware to validate required environment variables
@@ -21,7 +22,7 @@ export function validateEnvironment(req: Request, res: Response, next: NextFunct
   }
 
   if (missingVars.length > 0) {
-    console.error('❌ Missing required environment variables:', missingVars.join(', '));
+    logger.error('Missing required environment variables:', missingVars.join(', '));
     res.status(500).json({
       success: false,
       message: 'Server configuration error',
@@ -33,7 +34,7 @@ export function validateEnvironment(req: Request, res: Response, next: NextFunct
 
   // Validate JWT_SECRET length
   if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
-    console.error('❌ JWT_SECRET must be at least 32 characters long');
+    logger.error('JWT_SECRET must be at least 32 characters long');
     res.status(500).json({
       success: false,
       message: 'Server configuration error',
@@ -44,7 +45,7 @@ export function validateEnvironment(req: Request, res: Response, next: NextFunct
 
   // Validate OPENAI_API_KEY format (basic check)
   if (process.env.OPENAI_API_KEY && !process.env.OPENAI_API_KEY.startsWith('sk-')) {
-    console.error('❌ OPENAI_API_KEY format is invalid');
+    logger.error('OPENAI_API_KEY format is invalid');
     res.status(500).json({
       success: false,
       message: 'Server configuration error',
@@ -77,24 +78,24 @@ export function validateEnvironmentAtStartup(): void {
   }
 
   if (missingVars.length > 0) {
-    console.error('❌ Missing required environment variables:', missingVars.join(', '));
-    console.error('Please check your .env file and ensure all required variables are set.');
+    logger.error('Missing required environment variables:', missingVars.join(', '));
+    logger.error('Please check your .env file and ensure all required variables are set.');
     process.exit(1);
   }
 
   // Validate JWT_SECRET length
   if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
-    console.error('❌ JWT_SECRET must be at least 32 characters long');
-    console.error('Please update your .env file with a secure JWT secret.');
+    logger.error('JWT_SECRET must be at least 32 characters long');
+    logger.error('Please update your .env file with a secure JWT secret.');
     process.exit(1);
   }
 
   // Validate OPENAI_API_KEY format (basic check)
   if (process.env.OPENAI_API_KEY && !process.env.OPENAI_API_KEY.startsWith('sk-')) {
-    console.error('❌ OPENAI_API_KEY format is invalid');
-    console.error('Please check your OpenAI API key format.');
+    logger.error('OPENAI_API_KEY format is invalid');
+    logger.error('Please check your OpenAI API key format.');
     process.exit(1);
   }
 
-  console.log('✅ Environment variables validation passed');
+  logger.info('Environment variables validation passed');
 }

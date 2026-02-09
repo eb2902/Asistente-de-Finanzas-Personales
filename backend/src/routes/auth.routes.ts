@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
 import { authenticateToken, AuthRequest } from '../middleware/auth.middleware';
 import Joi from 'joi';
+import logger from '../utils/logger';
 
 const router = Router();
 
@@ -46,11 +47,11 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
       data: result
     });
 
-  } catch (error: any) {
-    console.error('Error en registro:', error);
+  } catch (error) {
+    logger.error('Registration error:', error);
     res.status(400).json({
       success: false,
-      error: error.message || 'Error al registrar usuario'
+      error: error instanceof Error ? error.message : 'Error al registrar usuario'
     });
   }
 });
@@ -84,11 +85,11 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       data: result
     });
 
-  } catch (error: any) {
-    console.error('Error en login:', error);
+  } catch (error) {
+    logger.error('Login error:', error);
     res.status(401).json({
       success: false,
-      error: error.message || 'Error al iniciar sesión'
+      error: error instanceof Error ? error.message : 'Error al iniciar sesión'
     });
   }
 });
@@ -115,11 +116,11 @@ router.get('/profile', authenticateToken, async (req: AuthRequest, res: Response
       data: user.toJSON()
     });
 
-  } catch (error: any) {
-    console.error('Error en perfil:', error);
+  } catch (error) {
+    logger.error('Profile error:', error);
     res.status(400).json({
       success: false,
-      error: error.message || 'Error al obtener perfil'
+      error: error instanceof Error ? error.message : 'Error al obtener perfil'
     });
   }
 });
@@ -147,11 +148,11 @@ router.post('/refresh', authenticateToken, async (req: AuthRequest, res: Respons
       data: result
     });
 
-  } catch (error: any) {
-    console.error('Error en refresh:', error);
+  } catch (error) {
+    logger.error('Token refresh error:', error);
     res.status(400).json({
       success: false,
-      error: error.message || 'Error al renovar token'
+      error: error instanceof Error ? error.message : 'Error al renovar token'
     });
   }
 });

@@ -2,11 +2,17 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
 import { AppDataSource } from '../config/database';
+import logger from '../utils/logger';
 
 const userRepository = AppDataSource.getRepository(User);
 
 export interface AuthRequest extends Request {
   user?: User;
+}
+
+interface JwtPayload {
+  userId: string;
+  email: string;
 }
 
 export const authenticateToken = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
@@ -19,7 +25,7 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
       return;
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
     
     // Find user in database
     const user = await userRepository.findOne({
@@ -35,7 +41,7 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
     req.user = user;
     next();
   } catch (error) {
-    console.error('Error en autenticación:', error);
+    logger.error('Authentication error:', error);
     res.status(403).json({ error: 'Token inválido o expirado.' });
   }
 };
@@ -46,7 +52,7 @@ export const optionalAuth = async (req: AuthRequest, res: Response, next: NextFu
     const token = authHeader && authHeader.split(' ')[1];
 
     if (token) {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
       
       const user = await userRepository.findOne({
         where: { id: decoded.userId },
@@ -59,7 +65,7 @@ export const optionalAuth = async (req: AuthRequest, res: Response, next: NextFu
     }
 
     next();
-  } catch (error) {
+  } catch {
     // Si el token es inválido, simplemente continuamos sin autenticación
     next();
   }

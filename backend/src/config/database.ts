@@ -1,6 +1,7 @@
 import { DataSource } from 'typeorm';
 import { User } from '../models/User';
 import { Transaction } from '../models/Transaction';
+import logger from '../utils/logger';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -20,10 +21,10 @@ export const initializeDatabase = async (): Promise<void> => {
   try {
     if (!AppDataSource.isInitialized) {
       await AppDataSource.initialize();
-      console.log('✅ Database connected successfully');
+      logger.info('Database connected successfully');
     }
   } catch (error) {
-    console.error('❌ Database connection failed:', error);
+    logger.error('Database connection failed:', error);
     process.exit(1);
   }
 };

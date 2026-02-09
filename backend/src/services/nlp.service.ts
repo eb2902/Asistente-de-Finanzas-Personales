@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
+import logger from '../utils/logger';
 
 dotenv.config();
 
@@ -61,7 +62,7 @@ export class NLPCategorizationService {
       return localResult.confidence > aiResult.confidence ? localResult : aiResult;
 
     } catch (error) {
-      console.error('Error in categorization:', error);
+      logger.error('Error in categorization:', error);
       
       // Fallback to keyword matching if AI fails
       try {
@@ -208,8 +209,8 @@ export class NLPCategorizationService {
         explanation: result.explanation
       };
 
-    } catch (error) {
-      console.error('AI categorization failed:', error);
+      } catch (error) {
+        logger.error('AI categorization failed:', error);
       throw error;
     }
   }
