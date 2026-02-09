@@ -3,17 +3,22 @@ import { User } from '../models/User';
 import { Transaction } from '../models/Transaction';
 import logger from '../utils/logger';
 
+// Cargar dotenv para asegurar que las variables de entorno estén disponibles
+require('dotenv').config();
+
+const databaseUrl = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/asistente_finanzas_db';
+
 export const AppDataSource = new DataSource({
   type: 'postgres',
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432'),
-  username: process.env.DB_USERNAME || 'postgres',
-  password: process.env.DB_PASSWORD || 'postgres',
-  database: process.env.DB_NAME || 'asistente_finanzas_db',
+  url: databaseUrl,
   entities: [User, Transaction],
   migrations: [__dirname + '/../migrations/*.ts'],
   synchronize: process.env.NODE_ENV === 'development',
   logging: process.env.NODE_ENV === 'development',
+  extra: {
+    ssl: false,
+    application_name: 'asistente-finanzas-backend'
+  }
 });
 
 // Initialize database connection

@@ -5,7 +5,7 @@ RUN apk add --no-cache libc6-compat python3 make g++
 WORKDIR /app
 
 # Copy package files for dependency caching
-COPY package*.json ./
+COPY ../frontend/package*.json ./
 RUN npm ci && npm cache clean --force
 
 # Stage 2: Build stage
@@ -15,8 +15,11 @@ WORKDIR /app
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 
+# Copy package files
+COPY ../frontend/package*.json ./
+
 # Copy source code
-COPY . .
+COPY ../frontend/ ./
 
 # Build the application
 RUN npm run build
@@ -34,15 +37,14 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy package files
-COPY package*.json ./
+COPY ../frontend/package*.json ./
 
 # Install only production dependencies
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci --omit=dev && npm cache clean --force
 
 # Copy built application from builder stage
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
+COPY --from=builder --chown=nextjs:nodejs /app/package*.json ./
 
 # Set the correct permission for prerender cache
 RUN mkdir -p .next/cache && chown -R nextjs:nodejs .next
@@ -63,4 +65,4 @@ ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
 # Start the application with dumb-init to handle signals properly
-CMD ["dumb-init", "node", "server.js"]
+CMD ["dumb-init", "node", "node_modules/.bin/next", "start"]
