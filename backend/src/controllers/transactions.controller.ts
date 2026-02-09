@@ -38,7 +38,7 @@ export class TransactionsController {
       }
 
       const { description, amount, type, merchant } = value;
-      const userId = (req as { user?: { id: string } }).user?.id; // From auth middleware
+      const userId = (req as { user?: { id: string } }).user?.id ?? ''; // From auth middleware
 
       // Check if user exists
       const userRepository = getRepository(User);
@@ -112,7 +112,7 @@ export class TransactionsController {
    */
   async getUserTransactions(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as { user?: { id: string } }).user?.id;
+      const userId = (req as { user?: { id: string } }).user?.id || '';
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
       const offset = (page - 1) * limit;
@@ -153,7 +153,7 @@ export class TransactionsController {
   async getTransactionById(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const userId = (req as { user?: { id: string } }).user?.id;
+      const userId = (req as { user?: { id: string } }).user?.id || '';
 
       const transactionRepository = getRepository(Transaction);
       const transaction = await transactionRepository.findOne({
@@ -188,7 +188,7 @@ export class TransactionsController {
   async updateTransaction(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const userId = (req as { user?: { id: string } }).user?.id;
+      const userId = (req as { user?: { id: string } }).user?.id || '';
 
       // Validate input
       const { error, value } = createTransactionSchema.validate(req.body);
@@ -266,7 +266,7 @@ export class TransactionsController {
   async deleteTransaction(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const userId = (req as { user?: { id: string } }).user?.id;
+      const userId = (req as { user?: { id: string } }).user?.id || '';
 
       const transactionRepository = getRepository(Transaction);
       const result = await transactionRepository.delete({
