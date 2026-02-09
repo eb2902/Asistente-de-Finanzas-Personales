@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "type-check": "tsc --noEmit",
     "docker:build": "docker build -t asistente-finanzas-frontend .",
     "docker:run": "docker run -p 3000:3000 asistente-finanzas-frontend"
@@ -20,6 +20,7 @@
     "dashboard"
   ],
   "author": "Senior Software Engineer",
+  "type": "module",
   "license": "MIT",
   "dependencies": {
     "@types/react-datepicker": "^6.2.0",
