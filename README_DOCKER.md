@@ -6,7 +6,7 @@ Este documento describe la configuración Docker optimizada para el proyecto Asi
 
 ### ✅ Multi-stage Builds
 - **Backend**: Reducción del 60-70% en tamaño de imagen mediante compilación TypeScript en stage separado
-- **Frontend**: Optimización del multi-stage existente con mejor manejo de dependencias
+- **Frontend**: Optimización con **standalone output** de Next.js para máxima eficiencia
 - **Capas de cache**: Mejor aprovechamiento del cache de Docker para builds más rápidos
 
 ### 🔒 Seguridad Reforzada
@@ -86,6 +86,30 @@ cp .env.example .env
 
 # Ver estado de los servicios
 ./scripts/deploy.sh status
+```
+
+### 4. Frontend Standalone (Opción Avanzada)
+
+Para entornos de producción donde se requiere máxima optimización del frontend:
+
+```bash
+# Construir imagen standalone (desde la carpeta frontend/)
+cd frontend
+docker build -t asistente-finanzas-frontend .
+
+# Características del standalone:
+# - Multi-stage build con 3 etapas (deps, builder, runner)
+# - Imagen final basada en Alpine Linux (~50MB)
+# - Usuario no-root para mayor seguridad
+# - Healthcheck funcional para monitoreo
+# - Variables de entorno: NODE_ENV=production, PORT=3000, HOSTNAME=0.0.0.0
+# - Comando de inicio: node server.js
+
+# Ejecutar contenedor standalone
+docker run -d -p 3000:3000 asistente-finanzas-frontend
+
+# Verificar healthcheck
+docker ps  # Debe mostrar "healthy" en la columna STATUS
 ```
 
 ## 🔧 Comandos Disponibles

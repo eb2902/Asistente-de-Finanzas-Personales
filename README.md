@@ -93,6 +93,25 @@ docker-compose logs -f
 # pgAdmin: http://localhost:5050 (opcional)
 ```
 
+#### Opción Avanzada: Frontend con Docker Standalone
+Para producción o entornos donde se requiere máxima optimización:
+
+```bash
+# Construir frontend con standalone output (desde la carpeta frontend/)
+cd frontend
+docker build -t asistente-finanzas-frontend .
+
+# Ejecutar contenedor frontend
+docker run -d -p 3000:3000 asistente-finanzas-frontend
+
+# Características del standalone:
+# - Imagen ligera basada en Alpine Linux
+# - Seguridad reforzada con usuario no-root
+# - Healthcheck funcional para monitoreo
+# - Variables de entorno optimizadas
+# - Comando de inicio: node server.js
+```
+
 #### Opción Desarrollo: Backend en Docker, Frontend Local
 ```bash
 # Iniciar solo base de datos y pgAdmin
