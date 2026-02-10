@@ -26,6 +26,10 @@ interface DashboardState {
   fetchDashboardData: () => Promise<void>;
   refreshData: () => Promise<void>;
   updateGoalProjection: (goalId: string) => void;
+  getFilteredData: () => {
+    cashFlow: any[];
+    goalProjections: any[];
+  };
   applyAISuggestion: (suggestionId: string) => void;
   dismissAISuggestion: (suggestionId: string) => void;
   
@@ -40,6 +44,11 @@ interface DashboardState {
   updateTransaction: (id: string, data: any) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
   refreshTransactions: () => Promise<void>;
+  
+  // Goal Actions
+  createGoal: (data: any) => Promise<void>;
+  updateGoal: (id: string, data: any) => Promise<void>;
+  deleteGoal: (id: string) => Promise<void>;
 }
 
 export const useDashboardStore = create<DashboardState>((set, get) => ({
@@ -51,12 +60,39 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     endDate: new Date()
   },
   selectedGoal: null,
+  transactions: [],
+  transactionsLoading: false,
+  transactionsError: null,
+  transactionsPage: 1,
+  transactionsTotalPages: 0,
 
   setData: (data) => set({ data }),
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
   setDateRange: (dateRange) => set({ dateRange }),
   setSelectedGoal: (goalId) => set({ selectedGoal: goalId }),
+
+  getFilteredData: () => {
+    const state = get();
+    if (!state.data) return { cashFlow: [], goalProjections: [] };
+
+    const { startDate, endDate } = state.dateRange;
+    
+    // Filtrar cashFlow por rango de fechas
+    const filteredCashFlow = state.data.cashFlow.filter(item => {
+      const itemDate = new Date(item.date);
+      return itemDate >= startDate && itemDate <= endDate;
+    });
+
+    // Filtrar goalProjections por rango de fechas (si es que tienen fechas)
+    // Para este ejemplo, simplemente devolvemos las proyecciones completas
+    const filteredGoalProjections = state.data.goalProjections;
+
+    return {
+      cashFlow: filteredCashFlow,
+      goalProjections: filteredGoalProjections,
+    };
+  },
 
   fetchDashboardData: async () => {
     set({ loading: true });
@@ -227,13 +263,19 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         });
       } else {
         set({
-          transactionsError: 'Error al cargar transacciones',
+          transactionsError: response.message || 'Error al cargar transacciones',
           transactionsLoading: false,
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      // Si es un error de autenticación, no mostrar error (el interceptor ya redirige)
+      if (error.message && error.message.includes('401')) {
+        set({ transactionsLoading: false });
+        return;
+      }
+      
       set({
-        transactionsError: 'Error de conexión al cargar transacciones',
+        transactionsError: error.message || 'Error de conexión al cargar transacciones',
         transactionsLoading: false,
       });
     }
@@ -292,5 +334,68 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
   refreshTransactions: async () => {
     await get().fetchTransactions(get().transactionsPage);
+  },
+
+  // Goal Actions Implementation
+  createGoal: async (data: any) => {
+    try {
+      // En una implementación real, esto llamaría a un endpoint API
+      const newGoal = {
+        id: `goal_${Date.now()}`,
+        ...data,
+      };
+      
+      const state = get();
+      const updatedGoals = [...state.data!.goals, newGoal];
+      
+      set({
+        data: {
+          ...state.data!,
+          goals: updatedGoals,
+        },
+      });
+      
+      toast.success('Meta creada exitosamente');
+    } catch (error) {
+      toast.error('Error al crear la meta');
+    }
+  },
+
+  updateGoal: async (id: string, data: any) => {
+    try {
+      const state = get();
+      const updatedGoals = state.data!.goals.map(goal => 
+        goal.id === id ? { ...goal, ...data } : goal
+      );
+      
+      set({
+        data: {
+          ...state.data!,
+          goals: updatedGoals,
+        },
+      });
+      
+      toast.success('Meta actualizada exitosamente');
+    } catch (error) {
+      toast.error('Error al actualizar la meta');
+    }
+  },
+
+  deleteGoal: async (id: string) => {
+    try {
+      const state = get();
+      const updatedGoals = state.data!.goals.filter(goal => goal.id !== id);
+      
+      set({
+        data: {
+          ...state.data!,
+          goals: updatedGoals,
+        },
+      });
+      
+      toast.success('Meta eliminada exitosamente');
+    } catch (error) {
+      toast.error('Error al eliminar la meta');
+    }
   },
 }));

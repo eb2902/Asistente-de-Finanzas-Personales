@@ -49,6 +49,14 @@ const TransactionList: React.FC<TransactionListProps> = ({
   };
 
   useEffect(() => {
+    // Verificar si hay token de autenticación antes de cargar transacciones
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setTransactions([]);
+      setLoading(false);
+      return;
+    }
+    
     fetchTransactions(currentPage);
   }, [currentPage]);
 
@@ -129,10 +137,21 @@ const TransactionList: React.FC<TransactionListProps> = ({
         </div>
       )}
 
-      {transactions.length === 0 ? (
-        <div className="text-center py-8 text-gray-400">
-          <div className="text-lg mb-2">No hay transacciones</div>
-          <p className="text-sm">Comienza agregando tu primera transacción</p>
+      {transactions.length === 0 && !error ? (
+        <div className="text-center py-8">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div className="text-lg font-semibold text-white mb-2">Sin transacciones</div>
+          <p className="text-gray-400 mb-4">No hay transacciones para mostrar</p>
+          <div className="text-sm text-gray-500">
+            {localStorage.getItem('token') 
+              ? "Agrega tu primera transacción para comenzar a gestionar tus finanzas"
+              : "Inicia sesión para acceder a tus transacciones"
+            }
+          </div>
         </div>
       ) : (
         <>

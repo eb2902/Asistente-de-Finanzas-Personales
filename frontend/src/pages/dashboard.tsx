@@ -6,6 +6,7 @@ import AISuggestionsCard from '../components/ai/AISuggestionsCard';
 import DateRangeFilter from '../components/dashboard/DateRangeFilter';
 import GoalSelector from '../components/dashboard/GoalSelector';
 import TransactionList from '../components/transactions/TransactionList';
+import Layout from '../components/common/Layout';
 import { Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -22,6 +23,7 @@ const Dashboard: React.FC = () => {
     updateGoalProjection,
     applyAISuggestion,
     dismissAISuggestion,
+    getFilteredData,
   } = useDashboardStore();
 
   useEffect(() => {
@@ -39,7 +41,7 @@ const Dashboard: React.FC = () => {
     endDate: Date;
   }) => {
     setDateRange(newDateRange);
-    // En una implementación real, esto filtraría los datos según el rango de fechas
+    // El filtrado se maneja automáticamente en el store
   };
 
   const handleGoalChange = (goalId: string | null) => {
@@ -56,53 +58,36 @@ const Dashboard: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-red-400">Error: {error}</div>
-      </div>
+      <Layout>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-red-400">Error: {error}</div>
+        </div>
+      </Layout>
     );
   }
 
   if (!data) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white">No hay datos disponibles</div>
-      </div>
+      <Layout>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-white">No hay datos disponibles</div>
+        </div>
+      </Layout>
     );
   }
 
+  // Obtener datos filtrados por fecha
+  const { cashFlow: filteredCashFlow, goalProjections: filteredGoalProjections } = getFilteredData();
+
   // Determinar qué datos mostrar según la meta seleccionada
   const displayData = selectedGoal 
-    ? data.goalProjections 
-    : data.goalProjections; // Para este ejemplo, mostramos las mismas proyecciones
+    ? filteredGoalProjections 
+    : filteredGoalProjections;
 
   const selectedGoalData = data.goals.find((g) => g.id === selectedGoal);
 
   return (
-    <div className="min-h-screen bg-gray-900">
-      {/* Header */}
-      <div className="bg-gray-800 border-b border-gray-700">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-white">Dashboard Financiero</h1>
-              <p className="text-gray-400 mt-1">Visión general de tu situación financiera</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm text-gray-400">Última actualización</p>
-                <p className="text-white font-semibold">
-                  {new Date().toLocaleDateString('es-ES', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
+    <Layout>
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         {/* Filters and Controls */}
@@ -126,7 +111,7 @@ const Dashboard: React.FC = () => {
                     style: 'currency',
                     currency: 'USD',
                     minimumFractionDigits: 0,
-                  }).format(data.cashFlow.reduce((sum, item) => sum + item.income, 0))}
+                  }).format(filteredCashFlow.reduce((sum, item) => sum + item.income, 0))}
                 </span>
               </div>
               <div className="flex justify-between items-center">
@@ -136,20 +121,20 @@ const Dashboard: React.FC = () => {
                     style: 'currency',
                     currency: 'USD',
                     minimumFractionDigits: 0,
-                  }).format(data.cashFlow.reduce((sum, item) => sum + item.expense, 0))}
+                  }).format(filteredCashFlow.reduce((sum, item) => sum + item.expense, 0))}
                 </span>
               </div>
               <div className="flex justify-between items-center pt-2 border-t border-gray-600">
                 <span className="text-gray-400">Flujo Neto</span>
                 <span className={`font-semibold ${
-                  data.cashFlow.reduce((sum, item) => sum + item.income - item.expense, 0) >= 0 
+                  filteredCashFlow.reduce((sum, item) => sum + item.income - item.expense, 0) >= 0 
                     ? 'text-green-400' : 'text-red-400'
                 }`}>
                   {new Intl.NumberFormat('es-ES', {
                     style: 'currency',
                     currency: 'USD',
                     minimumFractionDigits: 0,
-                  }).format(data.cashFlow.reduce((sum, item) => sum + item.income - item.expense, 0))}
+                  }).format(filteredCashFlow.reduce((sum, item) => sum + item.income - item.expense, 0))}
                 </span>
               </div>
             </div>
@@ -161,7 +146,7 @@ const Dashboard: React.FC = () => {
           {/* Cash Flow Chart */}
           <div>
             <CashFlowChart
-              data={data.cashFlow}
+              data={filteredCashFlow}
               height={400}
               showTooltips={true}
               showLegend={true}
@@ -216,7 +201,7 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 };
 

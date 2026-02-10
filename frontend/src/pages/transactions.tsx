@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDashboardStore } from '../store/dashboardStore';
 import TransactionModal from '../components/transactions/TransactionModal';
 import TransactionList from '../components/transactions/TransactionList';
+import Layout from '../components/common/Layout';
 import { Plus, Filter, Download, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -84,39 +85,7 @@ const TransactionsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900">
-      {/* Header */}
-      <div className="bg-gray-800 border-b border-gray-700">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-white">Gestión de Transacciones</h1>
-              <p className="text-gray-400 mt-1">Administra tus ingresos y gastos</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={handleRefresh}
-                disabled={loading}
-                className="flex items-center space-x-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors duration-200"
-              >
-                <Download className="w-4 h-4" />
-                <span>Actualizar</span>
-              </button>
-              <button
-                onClick={() => {
-                  setEditingTransaction(null);
-                  setIsModalOpen(true);
-                }}
-                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all duration-200"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Nueva Transacción</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
+    <Layout>
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         {/* Stats Summary */}
@@ -194,7 +163,7 @@ const TransactionsPage: React.FC = () => {
         transaction={editingTransaction}
         isLoading={loading}
       />
-    </div>
+    </Layout>
   );
 };
 
