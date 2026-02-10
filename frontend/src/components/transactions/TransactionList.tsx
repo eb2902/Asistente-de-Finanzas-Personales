@@ -37,9 +37,9 @@ const TransactionList: React.FC<TransactionListProps> = ({
       } else {
         setError('Error al cargar transacciones');
       }
-    } catch (err) {
+    } catch {
+      // Ignoramos el error intencionalmente
       setError('Error de conexión al cargar transacciones');
-      console.error('Error fetching transactions:', err);
     } finally {
       setLoading(false);
     }
@@ -70,9 +70,9 @@ const TransactionList: React.FC<TransactionListProps> = ({
       // Refrescar la lista después de eliminar
       await fetchTransactions(currentPage);
       onUpdateSuccess();
-    } catch (error) {
+    } catch {
+      // Ignoramos el error intencionalmente
       setError('Error al eliminar la transacción');
-      console.error('Error deleting transaction:', error);
     } finally {
       setTransactionToDelete(null);
       setShowConfirmDialog(false);

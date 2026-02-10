@@ -152,8 +152,7 @@ export const useTransactionForm = ({ onSubmit, initialData }: UseTransactionForm
     try {
       await onSubmit(data);
       setIsDirty(false);
-    } catch (error) {
-      console.error('Error submitting form:', error);
+    } catch {
       // Podrías manejar errores específicos aquí
     } finally {
       setIsSubmitting(false);

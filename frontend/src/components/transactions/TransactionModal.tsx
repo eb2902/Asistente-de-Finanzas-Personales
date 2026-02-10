@@ -101,8 +101,8 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
               confidence: result.data.confidence
             });
           }
-        } catch (error) {
-          console.log('AI categorization failed:', error);
+        } catch {
+          // Ignoramos el error intencionalmente
           setAiSuggestion(null);
         } finally {
           setIsCategorizing(false);
@@ -120,8 +120,8 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
     try {
       await onSubmit(data);
       // El cierre del modal será manejado por el componente padre
-    } catch (error) {
-      console.error('Error submitting transaction:', error);
+    } catch {
+      // Error handling is managed by the parent component
     }
   };
 

@@ -182,9 +182,8 @@ const Dashboard: React.FC = () => {
           {/* Recent Transactions */}
           <div className="lg:col-span-2">
             <TransactionList
-              onEditTransaction={(transaction) => {
+              onEditTransaction={() => {
                 // En el dashboard, solo mostramos información, no permitimos edición directa
-                console.log('Edit transaction:', transaction);
               }}
               onUpdateSuccess={() => {
                 // Refrescar el dashboard cuando se actualicen transacciones

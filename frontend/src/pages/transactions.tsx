@@ -14,7 +14,6 @@ const TransactionsPage: React.FC = () => {
     fetchTransactions,
     createTransaction,
     updateTransaction,
-    deleteTransaction,
     refreshTransactions,
   } = useDashboardStore();
 
@@ -33,7 +32,7 @@ const TransactionsPage: React.FC = () => {
       setIsModalOpen(false);
       setEditingTransaction(null);
     } catch {
-      console.error('Error creating transaction');
+      // Error handling is managed by the parent component
     } finally {
       setLoading(false);
     }
@@ -53,22 +52,12 @@ const TransactionsPage: React.FC = () => {
       setIsModalOpen(false);
       setEditingTransaction(null);
     } catch {
-      console.error('Error updating transaction');
+      // Error handling is managed by the parent component
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteTransaction = async (transactionId: string) => {
-    setLoading(true);
-    try {
-      await deleteTransaction(transactionId);
-    } catch {
-      console.error('Error deleting transaction');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleRefresh = async () => {
     setLoading(true);

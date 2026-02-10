@@ -28,11 +28,6 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
       errorInfo,
     });
     
-    // Log the error to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('ErrorBoundary caught an error:', error, errorInfo);
-    }
-    
     // Aquí podrías enviar el error a un servicio de monitoreo
     // sendErrorToService(error, errorInfo);
   }
