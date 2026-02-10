@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { DashboardData, DateRange, ApiError, GoalData, DashboardMetrics } from '../interfaces/financial';
+import { DashboardData, DateRange, ApiError, GoalData } from '../interfaces/financial';
 import { generateCompoundProjection } from '../utils/compoundInterest';
 import { Transaction } from '../interfaces/financial';
 import { transactionService } from '../services/transactionService';
@@ -122,28 +122,28 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       const currentYear = now.getFullYear();
 
       // Filtrar transacciones del mes actual
-      const monthlyTransactions = transactions.filter((t: any) => {
+      const monthlyTransactions = transactions.filter((t: Transaction) => {
         const txDate = new Date(t.date || t.createdAt);
         return txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear;
       });
 
       // Calcular ingresos y gastos del mes
       const monthlyIncome = monthlyTransactions
-        .filter((t: any) => t.type === 'income')
-        .reduce((sum: number, t: any) => sum + Number(t.amount), 0);
+        .filter((t: Transaction) => t.type === 'income')
+        .reduce((sum: number, t: Transaction) => sum + Number(t.amount), 0);
 
       const monthlyExpenses = monthlyTransactions
-        .filter((t: any) => t.type === 'expense')
-        .reduce((sum: number, t: any) => sum + Number(t.amount), 0);
+        .filter((t: Transaction) => t.type === 'expense')
+        .reduce((sum: number, t: Transaction) => sum + Number(t.amount), 0);
 
       // Calcular balance total
       const allIncome = transactions
-        .filter((t: any) => t.type === 'income')
-        .reduce((sum: number, t: any) => sum + Number(t.amount), 0);
+        .filter((t: Transaction) => t.type === 'income')
+        .reduce((sum: number, t: Transaction) => sum + Number(t.amount), 0);
 
       const allExpenses = transactions
-        .filter((t: any) => t.type === 'expense')
-        .reduce((sum: number, t: any) => sum + Number(t.amount), 0);
+        .filter((t: Transaction) => t.type === 'expense')
+        .reduce((sum: number, t: Transaction) => sum + Number(t.amount), 0);
 
       // Generar datos de cashFlow (últimos 30 días)
       const cashFlow: { date: string; income: number; expense: number }[] = [];
@@ -152,18 +152,18 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         date.setDate(date.getDate() - i);
         const dateStr = date.toISOString().split('T')[0];
         
-        const dayTransactions = transactions.filter((t: any) => {
+        const dayTransactions = transactions.filter((t: Transaction) => {
           const txDate = (t.date || t.createdAt).split('T')[0];
           return txDate === dateStr;
         });
 
         const income = dayTransactions
-          .filter((t: any) => t.type === 'income')
-          .reduce((sum: number, t: any) => sum + Number(t.amount), 0);
+          .filter((t: Transaction) => t.type === 'income')
+          .reduce((sum: number, t: Transaction) => sum + Number(t.amount), 0);
 
         const expense = dayTransactions
-          .filter((t: any) => t.type === 'expense')
-          .reduce((sum: number, t: any) => sum + Number(t.amount), 0);
+          .filter((t: Transaction) => t.type === 'expense')
+          .reduce((sum: number, t: Transaction) => sum + Number(t.amount), 0);
 
         cashFlow.push({ date: dateStr, income, expense });
       }
@@ -215,8 +215,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         data: dashboardData, 
         loading: false 
       });
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+    } catch {
       set({ error: 'Error al cargar los datos del dashboard', loading: false });
     }
   },
