@@ -6,7 +6,6 @@ const router = Router();
 const transactionsController = new TransactionsController();
 
 // Public routes (no authentication required)
-router.post('/categorize', transactionsController.categorizeTransaction.bind(transactionsController));
 router.get('/test', (req, res) => {
   res.json({
     status: 'ok',
@@ -17,6 +16,9 @@ router.get('/test', (req, res) => {
 
 // Apply authentication middleware to all routes that require it
 router.use(authenticateToken);
+
+// Protected routes
+router.post('/categorize', transactionsController.categorizeTransaction.bind(transactionsController));
 
 // Transaction routes (require authentication)
 router.post('/', transactionsController.createTransaction.bind(transactionsController));

@@ -96,80 +96,127 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   },
 
   fetchDashboardData: async () => {
-    set({ loading: true });
+    set({ loading: true, error: null });
     try {
-      // Simulación de llamada API
-      const mockData: DashboardData = {
-        cashFlow: [
-          { date: '2024-01-01', income: 5000, expense: 3000 },
-          { date: '2024-01-02', income: 4500, expense: 3500 },
-          { date: '2024-01-03', income: 6000, expense: 2500 },
-          { date: '2024-01-04', income: 5500, expense: 4000 },
-          { date: '2024-01-05', income: 7000, expense: 3200 },
-        ],
-        goalProjections: [
-          { month: 'Ene', amount: 1000, target: 5000 },
-          { month: 'Feb', amount: 2100, target: 5000 },
-          { month: 'Mar', amount: 3310, target: 5000 },
-          { month: 'Abr', amount: 4641, target: 5000 },
-          { month: 'May', amount: 6105, target: 5000 },
-        ],
-        recentTransactions: [
-          {
-            id: '1',
-            description: 'Supermercado',
-            amount: 150,
-            type: 'expense',
-            category: 'Alimentos',
-            date: '2024-01-05',
-            createdAt: '2024-01-05T10:00:00Z',
-            updatedAt: '2024-01-05T10:00:00Z',
-          },
-          {
-            id: '2',
-            description: 'Sueldo',
-            amount: 3000,
-            type: 'income',
-            category: 'Salario',
-            date: '2024-01-01',
-            createdAt: '2024-01-01T09:00:00Z',
-            updatedAt: '2024-01-01T09:00:00Z',
-          },
-        ],
-        aiSuggestions: [
-          {
-            id: '1',
-            description: 'Cafetería del trabajo',
-            amount: 25,
-            suggestedCategory: 'Alimentos',
-            confidence: 0.95,
-            date: '2024-01-05',
-          },
-          {
-            id: '2',
-            description: 'Transporte público',
-            amount: 12,
-            suggestedCategory: 'Transporte',
-            confidence: 0.88,
-            date: '2024-01-04',
-          },
-        ],
-        goals: [
-          {
-            id: '1',
-            name: 'Ahorro para viaje',
-            targetAmount: 5000,
-            currentAmount: 1000,
-            startDate: '2024-01-01',
-            endDate: '2024-12-31',
-            interestRate: 0.05,
-            compoundFrequency: 12,
-          },
-        ],
+      const token = localStorage.getItem('token');
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      
+      // Obtener transacciones del usuario para calcular métricas
+      const transactionsResponse = await fetch(`${apiUrl}/api/transactions?page=1&limit=100`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!transactionsResponse.ok) {
+        throw new Error('Error al obtener transacciones');
+      }
+
+      const transactionsData = await transactionsResponse.json();
+      const transactions = transactionsData.data?.transactions || [];
+
+      // Calcular métricas del dashboard
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+
+      // Filtrar transacciones del mes actual
+      const monthlyTransactions = transactions.filter((t: any) => {
+        const txDate = new Date(t.date || t.createdAt);
+        return txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear;
+      });
+
+      // Calcular ingresos y gastos del mes
+      const monthlyIncome = monthlyTransactions
+        .filter((t: any) => t.type === 'income')
+        .reduce((sum: number, t: any) => sum + Number(t.amount), 0);
+
+      const monthlyExpenses = monthlyTransactions
+        .filter((t: any) => t.type === 'expense')
+        .reduce((sum: number, t: any) => sum + Number(t.amount), 0);
+
+      // Calcular balance total
+      const allIncome = transactions
+        .filter((t: any) => t.type === 'income')
+        .reduce((sum: number, t: any) => sum + Number(t.amount), 0);
+
+      const allExpenses = transactions
+        .filter((t: any) => t.type === 'expense')
+        .reduce((sum: number, t: any) => sum + Number(t.amount), 0);
+
+      // Generar datos de cashFlow (últimos 30 días)
+      const cashFlow: { date: string; income: number; expense: number }[] = [];
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        const dayTransactions = transactions.filter((t: any) => {
+          const txDate = (t.date || t.createdAt).split('T')[0];
+          return txDate === dateStr;
+        });
+
+        const income = dayTransactions
+          .filter((t: any) => t.type === 'income')
+          .reduce((sum: number, t: any) => sum + Number(t.amount), 0);
+
+        const expense = dayTransactions
+          .filter((t: any) => t.type === 'expense')
+          .reduce((sum: number, t: any) => sum + Number(t.amount), 0);
+
+        cashFlow.push({ date: dateStr, income, expense });
+      }
+
+      // Generar proyecciones de metas (placeholder hasta que exista el endpoint de metas)
+      const goalProjections = [
+        { month: 'Ene', amount: 1000, target: 5000 },
+        { month: 'Feb', amount: 2100, target: 5000 },
+        { month: 'Mar', amount: 3310, target: 5000 },
+        { month: 'Abr', amount: 4641, target: 5000 },
+        { month: 'May', amount: 6105, target: 5000 },
+      ];
+
+      // Obtener metas del usuario (placeholder hasta que exista el endpoint)
+      const goals = [
+        {
+          id: '1',
+          name: 'Ahorro para viaje',
+          targetAmount: 5000,
+          currentAmount: 1000,
+          startDate: '2024-01-01',
+          endDate: '2024-12-31',
+          interestRate: 0.05,
+          compoundFrequency: 12,
+        },
+      ];
+
+      // Construir objeto del dashboard
+      const dashboardData: DashboardData = {
+        cashFlow,
+        goalProjections,
+        recentTransactions: transactions.slice(0, 10),
+        aiSuggestions: [],
+        goals,
+        // Métricas adicionales
+        metrics: {
+          monthlyIncome,
+          monthlyExpenses,
+          monthlyBalance: monthlyIncome - monthlyExpenses,
+          totalIncome: allIncome,
+          totalExpenses: allExpenses,
+          totalBalance: allIncome - allExpenses,
+          transactionCount: transactions.length,
+        }
       };
 
-      set({ data: mockData, loading: false });
-    } catch {
+      // Agregar métricas al objeto data
+      set({ 
+        data: dashboardData as any, 
+        loading: false 
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
       set({ error: 'Error al cargar los datos del dashboard', loading: false });
     }
   },

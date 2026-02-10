@@ -24,6 +24,9 @@ export class Transaction {
   @Column({ nullable: true })
   merchant?: string; // Optional merchant name
 
+  @Column({ type: 'date', nullable: true })
+  date?: string; // Transaction date (string format YYYY-MM-DD)
+
   @Column()
   userId!: string;
 
@@ -33,6 +36,9 @@ export class Transaction {
 
   @CreateDateColumn()
   createdAt!: Date;
+
+  @CreateDateColumn()
+  updatedAt!: Date;
 
   // Method to validate transaction data
   validate(): string[] {
@@ -68,13 +74,15 @@ export class Transaction {
     return {
       id: this.id,
       description: this.description,
-      amount: this.amount,
-      category: this.category,
-      confidence: this.confidence,
+      amount: Number(this.amount),
+      category: this.category || null,
+      confidence: this.confidence || null,
       type: this.type,
-      merchant: this.merchant,
+      merchant: this.merchant || null,
+      date: this.date || this.createdAt?.toISOString().split('T')[0],
       userId: this.userId,
-      createdAt: this.createdAt
+      createdAt: this.createdAt?.toISOString(),
+      updatedAt: this.updatedAt?.toISOString()
     };
   }
 }

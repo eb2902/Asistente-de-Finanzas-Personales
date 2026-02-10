@@ -11,6 +11,7 @@ const createTransactionSchema = Joi.object({
   description: Joi.string().min(1).max(255).required(),
   amount: Joi.number().positive().required(),
   type: Joi.string().valid('income', 'expense').required(),
+  category: Joi.string().optional(),
   merchant: Joi.string().optional(),
 });
 
