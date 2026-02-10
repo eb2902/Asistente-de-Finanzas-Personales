@@ -3,16 +3,14 @@ import { useDashboardStore } from '../store/dashboardStore';
 import TransactionModal from '../components/transactions/TransactionModal';
 import TransactionList from '../components/transactions/TransactionList';
 import Layout from '../components/common/Layout';
-import { Plus, Filter, Download, Upload } from 'lucide-react';
+import { Filter, Download, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Transaction, CreateTransactionData, UpdateTransactionData } from '../interfaces/financial';
 
 const TransactionsPage: React.FC = () => {
   const {
     transactions,
     transactionsLoading,
-    transactionsError,
-    transactionsPage,
-    transactionsTotalPages,
     fetchTransactions,
     createTransaction,
     updateTransaction,
@@ -21,32 +19,32 @@ const TransactionsPage: React.FC = () => {
   } = useDashboardStore();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState<any>(null);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchTransactions(1);
   }, [fetchTransactions]);
 
-  const handleCreateTransaction = async (data: any) => {
+  const handleCreateTransaction = async (data: CreateTransactionData) => {
     setLoading(true);
     try {
       await createTransaction(data);
       setIsModalOpen(false);
       setEditingTransaction(null);
-    } catch (error) {
-      console.error('Error creating transaction:', error);
+    } catch {
+      console.error('Error creating transaction');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEditTransaction = (transaction: any) => {
+  const handleEditTransaction = (transaction: Transaction) => {
     setEditingTransaction(transaction);
     setIsModalOpen(true);
   };
 
-  const handleUpdateTransaction = async (data: any) => {
+  const handleUpdateTransaction = async (data: UpdateTransactionData) => {
     if (!editingTransaction) return;
     
     setLoading(true);
@@ -54,8 +52,8 @@ const TransactionsPage: React.FC = () => {
       await updateTransaction(editingTransaction.id, data);
       setIsModalOpen(false);
       setEditingTransaction(null);
-    } catch (error) {
-      console.error('Error updating transaction:', error);
+    } catch {
+      console.error('Error updating transaction');
     } finally {
       setLoading(false);
     }
@@ -65,8 +63,8 @@ const TransactionsPage: React.FC = () => {
     setLoading(true);
     try {
       await deleteTransaction(transactionId);
-    } catch (error) {
-      console.error('Error deleting transaction:', error);
+    } catch {
+      console.error('Error deleting transaction');
     } finally {
       setLoading(false);
     }
@@ -77,7 +75,7 @@ const TransactionsPage: React.FC = () => {
     try {
       await refreshTransactions();
       toast.success('Datos actualizados');
-    } catch (error) {
+    } catch {
       toast.error('Error al actualizar datos');
     } finally {
       setLoading(false);

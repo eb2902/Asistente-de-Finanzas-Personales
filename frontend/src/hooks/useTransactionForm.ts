@@ -1,10 +1,9 @@
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { CreateTransactionData } from '../services/transactionService';
 
 interface UseTransactionFormProps {
   onSubmit: (data: CreateTransactionData) => Promise<void>;
   initialData?: Partial<CreateTransactionData>;
-  mode?: 'create' | 'edit';
 }
 
 interface ValidationResult {
@@ -17,7 +16,7 @@ interface ValidationResult {
   };
 }
 
-export const useTransactionForm = ({ onSubmit, initialData, mode = 'create' }: UseTransactionFormProps) => {
+export const useTransactionForm = ({ onSubmit, initialData }: UseTransactionFormProps) => {
   const [data, setData] = useState<CreateTransactionData>({
     description: initialData?.description || '',
     amount: initialData?.amount || 0,
@@ -71,7 +70,7 @@ export const useTransactionForm = ({ onSubmit, initialData, mode = 'create' }: U
     };
   }, [data]);
 
-  const updateField = useCallback((field: keyof CreateTransactionData, value: any) => {
+  const updateField = useCallback((field: keyof CreateTransactionData, value: string | number) => {
     setData(prev => ({ ...prev, [field]: value }));
     setIsDirty(true);
     

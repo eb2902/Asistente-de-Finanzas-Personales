@@ -54,7 +54,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // Si no tiene fecha de expiración, asumimos que es válido
       return true;
-    } catch (error) {
+    } catch {
       // Si hay error al decodificar, el token es inválido
       return false;
     }
@@ -106,8 +106,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } else {
         throw new Error(data.error || 'Error al iniciar sesión');
       }
-    } catch (error) {
-      console.error('Login error:', error);
+    } catch {
       return false;
     } finally {
       setLoading(false);
@@ -141,8 +140,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } else {
         throw new Error(data.error || 'Error al registrar usuario');
       }
-    } catch (error) {
-      console.error('Register error:', error);
+    } catch {
       return false;
     } finally {
       setLoading(false);

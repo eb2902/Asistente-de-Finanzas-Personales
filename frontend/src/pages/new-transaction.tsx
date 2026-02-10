@@ -4,22 +4,22 @@ import Layout from '../components/common/Layout';
 import TransactionModal from '../components/transactions/TransactionModal';
 import { Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { CreateTransactionData } from '../services/transactionService';
 
 const NewTransactionPage: React.FC = () => {
   const {
     createTransaction,
-    fetchDashboardData,
   } = useDashboardStore();
 
   const [isModalOpen, setIsModalOpen] = useState(true);
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: CreateTransactionData) => {
     try {
       await createTransaction(data);
       toast.success('Transacción creada exitosamente');
       // Redirigir al historial de transacciones
       window.location.href = '/transactions';
-    } catch (error) {
+    } catch {
       toast.error('Error al crear la transacción');
     }
   };

@@ -19,7 +19,6 @@ const GoalsPage: React.FC = () => {
   const {
     data,
     loading,
-    error,
     fetchDashboardData,
     createGoal,
     updateGoal,
@@ -70,7 +69,7 @@ const GoalsPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     const goalData = {
@@ -93,7 +92,7 @@ const GoalsPage: React.FC = () => {
       setIsModalOpen(false);
       setEditingGoal(null);
       fetchDashboardData();
-    } catch (error) {
+    } catch {
       toast.error(editingGoal ? 'Error al actualizar la meta' : 'Error al crear la meta');
     }
   };
@@ -107,7 +106,7 @@ const GoalsPage: React.FC = () => {
       await deleteGoal(goalId);
       toast.success('Meta eliminada exitosamente');
       fetchDashboardData();
-    } catch (error) {
+    } catch {
       toast.error('Error al eliminar la meta');
     }
   };
@@ -134,15 +133,6 @@ const GoalsPage: React.FC = () => {
     );
   }
 
-  if (error) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center py-12">
-          <div className="text-red-400">Error: {error}</div>
-        </div>
-      </Layout>
-    );
-  }
 
   return (
     <Layout>

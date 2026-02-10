@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { DashboardData, DateRange } from '../interfaces/financial';
 import { generateCompoundProjection } from '../utils/compoundInterest';
 import { Transaction } from '../interfaces/financial';
-import { transactionService } from '../services/transactionService';
+import { transactionService, CreateTransactionData, UpdateTransactionData } from '../services/transactionService';
 import toast from 'react-hot-toast';
 
 interface DashboardState {
@@ -27,8 +27,8 @@ interface DashboardState {
   refreshData: () => Promise<void>;
   updateGoalProjection: (goalId: string) => void;
   getFilteredData: () => {
-    cashFlow: any[];
-    goalProjections: any[];
+    cashFlow: { date: string; income: number; expense: number }[];
+    goalProjections: { month: string; amount: number; target: number }[];
   };
   applyAISuggestion: (suggestionId: string) => void;
   dismissAISuggestion: (suggestionId: string) => void;
@@ -40,8 +40,8 @@ interface DashboardState {
   setTransactionsPage: (page: number) => void;
   setTransactionsTotalPages: (totalPages: number) => void;
   fetchTransactions: (page?: number) => Promise<void>;
-  createTransaction: (data: any) => Promise<void>;
-  updateTransaction: (id: string, data: any) => Promise<void>;
+  createTransaction: (data: CreateTransactionData) => Promise<void>;
+  updateTransaction: (id: string, data: UpdateTransactionData) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
   refreshTransactions: () => Promise<void>;
   
@@ -281,7 +281,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     }
   },
 
-  createTransaction: async (data) => {
+  createTransaction: async (data: CreateTransactionData) => {
     try {
       const response = await transactionService.createTransaction(data);
       if (response.success) {
@@ -298,7 +298,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     }
   },
 
-  updateTransaction: async (id, data) => {
+  updateTransaction: async (id: string, data: UpdateTransactionData) => {
     try {
       const response = await transactionService.updateTransaction(id, data);
       if (response.success) {
@@ -356,7 +356,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       });
       
       toast.success('Meta creada exitosamente');
-    } catch (error) {
+    } catch {
       toast.error('Error al crear la meta');
     }
   },
@@ -376,7 +376,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       });
       
       toast.success('Meta actualizada exitosamente');
-    } catch (error) {
+    } catch {
       toast.error('Error al actualizar la meta');
     }
   },
@@ -394,7 +394,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       });
       
       toast.success('Meta eliminada exitosamente');
-    } catch (error) {
+    } catch {
       toast.error('Error al eliminar la meta');
     }
   },
