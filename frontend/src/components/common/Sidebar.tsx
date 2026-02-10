@@ -7,7 +7,6 @@ import {
   TrendingUp,
   Calendar,
   Home,
-  Menu,
   X
 } from 'lucide-react';
 

@@ -7,8 +7,6 @@ import DateRangeFilter from '../components/dashboard/DateRangeFilter';
 import GoalSelector from '../components/dashboard/GoalSelector';
 import TransactionList from '../components/transactions/TransactionList';
 import Layout from '../components/common/Layout';
-import { Plus } from 'lucide-react';
-import toast from 'react-hot-toast';
 
 const Dashboard: React.FC = () => {
   const {

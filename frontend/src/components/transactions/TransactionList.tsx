@@ -1,20 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Transaction } from '../../interfaces/financial';
-import { formatCurrency, formatDate } from '../../utils/format';
 import { transactionService } from '../../services/transactionService';
 import TransactionItem from './TransactionItem';
 import ConfirmDialog from '../common/ConfirmDialog';
 
 interface TransactionListProps {
   onEditTransaction: (transaction: Transaction) => void;
-  onDeleteTransaction: (transactionId: string) => void;
   onUpdateSuccess: () => void;
   isLoading?: boolean;
 }
 
 const TransactionList: React.FC<TransactionListProps> = ({
   onEditTransaction,
-  onDeleteTransaction,
   onUpdateSuccess,
   isLoading = false
 }) => {
@@ -86,13 +83,6 @@ const TransactionList: React.FC<TransactionListProps> = ({
     onEditTransaction(transaction);
   };
 
-  const getTypeColor = (type: string) => {
-    return type === 'income' ? 'text-green-400' : 'text-red-400';
-  };
-
-  const getTypeIcon = (type: string) => {
-    return type === 'income' ? '↑' : '↓';
-  };
 
   if (loading || isLoading) {
     return (

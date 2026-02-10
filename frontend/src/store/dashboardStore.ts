@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { DashboardData, DateRange } from '../interfaces/financial';
+import { DashboardData, DateRange, ApiError, GoalData } from '../interfaces/financial';
 import { generateCompoundProjection } from '../utils/compoundInterest';
 import { Transaction } from '../interfaces/financial';
 import { transactionService, CreateTransactionData, UpdateTransactionData } from '../services/transactionService';
@@ -46,8 +46,8 @@ interface DashboardState {
   refreshTransactions: () => Promise<void>;
   
   // Goal Actions
-  createGoal: (data: any) => Promise<void>;
-  updateGoal: (id: string, data: any) => Promise<void>;
+  createGoal: (data: GoalData) => Promise<void>;
+  updateGoal: (id: string, data: Partial<GoalData>) => Promise<void>;
   deleteGoal: (id: string) => Promise<void>;
 }
 
@@ -267,15 +267,16 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           transactionsLoading: false,
         });
       }
-    } catch (error: any) {
+    } catch (error) {
+      const apiError = error as ApiError;
       // Si es un error de autenticación, no mostrar error (el interceptor ya redirige)
-      if (error.message && error.message.includes('401')) {
+      if (apiError.message && apiError.message.includes('401')) {
         set({ transactionsLoading: false });
         return;
       }
       
       set({
-        transactionsError: error.message || 'Error de conexión al cargar transacciones',
+        transactionsError: apiError.message || 'Error de conexión al cargar transacciones',
         transactionsLoading: false,
       });
     }
@@ -293,8 +294,9 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       } else {
         toast.error(response.message || 'Error al crear la transacción');
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Error al crear la transacción');
+    } catch (error) {
+      const apiError = error as ApiError;
+      toast.error(apiError.message || 'Error al crear la transacción');
     }
   },
 
@@ -310,8 +312,9 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       } else {
         toast.error(response.message || 'Error al actualizar la transacción');
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Error al actualizar la transacción');
+    } catch (error) {
+      const apiError = error as ApiError;
+      toast.error(apiError.message || 'Error al actualizar la transacción');
     }
   },
 
@@ -327,8 +330,9 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       } else {
         toast.error(response.message || 'Error al eliminar la transacción');
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Error al eliminar la transacción');
+    } catch (error) {
+      const apiError = error as ApiError;
+      toast.error(apiError.message || 'Error al eliminar la transacción');
     }
   },
 
@@ -337,7 +341,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   },
 
   // Goal Actions Implementation
-  createGoal: async (data: any) => {
+  createGoal: async (data: GoalData) => {
     try {
       // En una implementación real, esto llamaría a un endpoint API
       const newGoal = {
@@ -356,12 +360,13 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       });
       
       toast.success('Meta creada exitosamente');
-    } catch {
-      toast.error('Error al crear la meta');
+    } catch (error) {
+      const apiError = error as ApiError;
+      toast.error(apiError.message || 'Error al crear la meta');
     }
   },
 
-  updateGoal: async (id: string, data: any) => {
+  updateGoal: async (id: string, data: Partial<GoalData>) => {
     try {
       const state = get();
       const updatedGoals = state.data!.goals.map(goal => 
@@ -376,8 +381,9 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       });
       
       toast.success('Meta actualizada exitosamente');
-    } catch {
-      toast.error('Error al actualizar la meta');
+    } catch (error) {
+      const apiError = error as ApiError;
+      toast.error(apiError.message || 'Error al actualizar la meta');
     }
   },
 
@@ -394,8 +400,9 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       });
       
       toast.success('Meta eliminada exitosamente');
-    } catch {
-      toast.error('Error al eliminar la meta');
+    } catch (error) {
+      const apiError = error as ApiError;
+      toast.error(apiError.message || 'Error al eliminar la meta');
     }
   },
 }));

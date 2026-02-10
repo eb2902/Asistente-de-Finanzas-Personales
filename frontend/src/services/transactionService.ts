@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Transaction } from '../interfaces/financial';
+import { Transaction, ApiError } from '../interfaces/financial';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
@@ -89,8 +89,9 @@ export const transactionService = {
     try {
       const response = await api.post<TransactionResponse>('/transactions', data);
       return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Error al crear la transacción');
+    } catch (error) {
+      const apiError = error as ApiError;
+      throw new Error(apiError.response?.data?.message || 'Error al crear la transacción');
     }
   },
 
@@ -101,8 +102,9 @@ export const transactionService = {
         params: { page, limit }
       });
       return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Error al obtener transacciones');
+    } catch (error) {
+      const apiError = error as ApiError;
+      throw new Error(apiError.response?.data?.message || 'Error al obtener transacciones');
     }
   },
 
@@ -111,8 +113,9 @@ export const transactionService = {
     try {
       const response = await api.get<TransactionResponse>(`/transactions/${id}`);
       return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Error al obtener la transacción');
+    } catch (error) {
+      const apiError = error as ApiError;
+      throw new Error(apiError.response?.data?.message || 'Error al obtener la transacción');
     }
   },
 
@@ -121,8 +124,9 @@ export const transactionService = {
     try {
       const response = await api.put<TransactionResponse>(`/transactions/${id}`, data);
       return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Error al actualizar la transacción');
+    } catch (error) {
+      const apiError = error as ApiError;
+      throw new Error(apiError.response?.data?.message || 'Error al actualizar la transacción');
     }
   },
 
@@ -131,8 +135,9 @@ export const transactionService = {
     try {
       const response = await api.delete<{ success: boolean; message: string }>(`/transactions/${id}`);
       return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Error al eliminar la transacción');
+    } catch (error) {
+      const apiError = error as ApiError;
+      throw new Error(apiError.response?.data?.message || 'Error al eliminar la transacción');
     }
   },
 
@@ -141,8 +146,9 @@ export const transactionService = {
     try {
       const response = await api.get<TransactionStatsResponse>('/transactions/stats');
       return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Error al obtener estadísticas');
+    } catch (error) {
+      const apiError = error as ApiError;
+      throw new Error(apiError.response?.data?.message || 'Error al obtener estadísticas');
     }
   },
 
@@ -157,8 +163,9 @@ export const transactionService = {
     try {
       const response = await api.post('/transactions/categorize', { description });
       return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Error al categorizar la transacción');
+    } catch (error) {
+      const apiError = error as ApiError;
+      throw new Error(apiError.response?.data?.message || 'Error al categorizar la transacción');
     }
   },
 
@@ -179,8 +186,9 @@ export const transactionService = {
         }
       });
       return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Error al obtener transacciones por rango de fechas');
+    } catch (error) {
+      const apiError = error as ApiError;
+      throw new Error(apiError.response?.data?.message || 'Error al obtener transacciones por rango de fechas');
     }
   }
 };

@@ -53,3 +53,25 @@ export interface DateRange {
   startDate: Date;
   endDate: Date;
 }
+
+export interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+      error?: string;
+    };
+    status?: number;
+  };
+  message?: string;
+  status?: number;
+}
+
+export interface GoalData {
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  startDate: string;
+  endDate: string;
+  interestRate: number;
+  compoundFrequency: number;
+}
