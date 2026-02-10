@@ -78,7 +78,9 @@ export class Goal {
 
   // Calculate progress percentage
   getProgress(): number {
-    if (this.targetAmount <= 0) return 0;
+    if (this.targetAmount <= 0) {
+      return 0;
+    }
     return Math.min((Number(this.currentAmount) / Number(this.targetAmount)) * 100, 100);
   }
 

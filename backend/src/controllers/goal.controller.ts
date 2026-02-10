@@ -193,13 +193,27 @@ export class GoalsController {
       }
 
       // Update goal fields
-      if (value.name) goal.name = value.name;
-      if (value.targetAmount) goal.targetAmount = value.targetAmount;
-      if (value.currentAmount !== undefined) goal.currentAmount = value.currentAmount;
-      if (value.startDate) goal.startDate = new Date(value.startDate).toISOString().split('T')[0];
-      if (value.endDate) goal.endDate = new Date(value.endDate).toISOString().split('T')[0];
-      if (value.interestRate !== undefined) goal.interestRate = value.interestRate;
-      if (value.compoundFrequency !== undefined) goal.compoundFrequency = value.compoundFrequency;
+      if (value.name) {
+        goal.name = value.name;
+      }
+      if (value.targetAmount) {
+        goal.targetAmount = value.targetAmount;
+      }
+      if (value.currentAmount !== undefined) {
+        goal.currentAmount = value.currentAmount;
+      }
+      if (value.startDate) {
+        goal.startDate = new Date(value.startDate).toISOString().split('T')[0];
+      }
+      if (value.endDate) {
+        goal.endDate = new Date(value.endDate).toISOString().split('T')[0];
+      }
+      if (value.interestRate !== undefined) {
+        goal.interestRate = value.interestRate;
+      }
+      if (value.compoundFrequency !== undefined) {
+        goal.compoundFrequency = value.compoundFrequency;
+      }
 
       // Validate updated goal
       const validationErrors = goal.validate();
