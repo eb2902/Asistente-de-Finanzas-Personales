@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { DashboardData, DateRange, ApiError, GoalData } from '../interfaces/financial';
+import { DashboardData, DateRange, ApiError, GoalData, DashboardMetrics } from '../interfaces/financial';
 import { generateCompoundProjection } from '../utils/compoundInterest';
 import { Transaction } from '../interfaces/financial';
 import { transactionService } from '../services/transactionService';
@@ -212,7 +212,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
       // Agregar métricas al objeto data
       set({ 
-        data: dashboardData as any, 
+        data: dashboardData, 
         loading: false 
       });
     } catch (error) {

@@ -16,6 +16,16 @@ export interface CashFlowData {
   expense: number;
 }
 
+export interface DashboardMetrics {
+  monthlyIncome: number;
+  monthlyExpenses: number;
+  monthlyBalance: number;
+  totalIncome: number;
+  totalExpenses: number;
+  totalBalance: number;
+  transactionCount: number;
+}
+
 export interface GoalProjectionData {
   month: string;
   amount: number;
@@ -48,6 +58,7 @@ export interface DashboardData {
   recentTransactions: Transaction[];
   aiSuggestions: AISuggestion[];
   goals: Goal[];
+  metrics: DashboardMetrics;
 }
 
 export interface DateRange {
