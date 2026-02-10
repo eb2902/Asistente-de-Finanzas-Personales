@@ -1,8 +1,9 @@
 import { create } from 'zustand';
-import { DashboardData, DateRange, ApiError, GoalData } from '../interfaces/financial';
+import { DashboardData, DateRange, ApiError, GoalData, Goal } from '../interfaces/financial';
 import { generateCompoundProjection } from '../utils/compoundInterest';
 import { Transaction } from '../interfaces/financial';
 import { transactionService } from '../services/transactionService';
+import { goalService } from '../services/goalService';
 import { CreateTransactionData, UpdateTransactionData } from '../interfaces/financial';
 import toast from 'react-hot-toast';
 
@@ -98,23 +99,24 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   fetchDashboardData: async () => {
     set({ loading: true, error: null });
     try {
-      const token = localStorage.getItem('token');
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-      
-      // Obtener transacciones del usuario para calcular métricas
-      const transactionsResponse = await fetch(`${apiUrl}/api/transactions?page=1&limit=100`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      // Obtener transacciones y metas en paralelo
+      const [transactionsResponse, goalsResponse] = await Promise.allSettled([
+        transactionService.getUserTransactions(1, 100),
+        goalService.getUserGoals()
+      ]);
 
-      if (!transactionsResponse.ok) {
-        throw new Error('Error al obtener transacciones');
+      let transactions: Transaction[] = [];
+      let goals: Goal[] = [];
+
+      // Procesar transacciones
+      if (transactionsResponse.status === 'fulfilled' && transactionsResponse.value.success) {
+        transactions = transactionsResponse.value.data.transactions;
       }
 
-      const transactionsData = await transactionsResponse.json();
-      const transactions = transactionsData.data?.transactions || [];
+      // Procesar metas
+      if (goalsResponse.status === 'fulfilled' && goalsResponse.value.success) {
+        goals = goalsResponse.value.data;
+      }
 
       // Calcular métricas del dashboard
       const now = new Date();
@@ -168,28 +170,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         cashFlow.push({ date: dateStr, income, expense });
       }
 
-      // Generar proyecciones de metas (placeholder hasta que exista el endpoint de metas)
-      const goalProjections = [
-        { month: 'Ene', amount: 1000, target: 5000 },
-        { month: 'Feb', amount: 2100, target: 5000 },
-        { month: 'Mar', amount: 3310, target: 5000 },
-        { month: 'Abr', amount: 4641, target: 5000 },
-        { month: 'May', amount: 6105, target: 5000 },
-      ];
-
-      // Obtener metas del usuario (placeholder hasta que exista el endpoint)
-      const goals = [
-        {
-          id: '1',
-          name: 'Ahorro para viaje',
-          targetAmount: 5000,
-          currentAmount: 1000,
-          startDate: '2024-01-01',
-          endDate: '2024-12-31',
-          interestRate: 0.05,
-          compoundFrequency: 12,
-        },
-      ];
+      // Generar proyecciones de metas basadas en datos reales
+      const goalProjections = generateRealGoalProjections(goals);
 
       // Construir objeto del dashboard
       const dashboardData: DashboardData = {
@@ -453,3 +435,29 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     }
   },
 }));
+
+// Función auxiliar para generar proyecciones de metas basadas en datos reales
+function generateRealGoalProjections(goals: Goal[]): { month: string; amount: number; target: number }[] {
+  if (!goals || goals.length === 0) {
+    return [
+      { month: 'Ene', amount: 0, target: 0 },
+      { month: 'Feb', amount: 0, target: 0 },
+      { month: 'Mar', amount: 0, target: 0 },
+      { month: 'Abr', amount: 0, target: 0 },
+      { month: 'May', amount: 0, target: 0 },
+      { month: 'Jun', amount: 0, target: 0 },
+    ];
+  }
+
+  // Usar la primera meta para generar proyecciones
+  const primaryGoal = goals[0];
+  const projection = generateCompoundProjection(
+    primaryGoal.currentAmount,
+    primaryGoal.interestRate,
+    12,
+    primaryGoal.targetAmount,
+    primaryGoal.compoundFrequency
+  );
+
+  return projection;
+}

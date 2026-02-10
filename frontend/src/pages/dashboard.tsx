@@ -7,6 +7,7 @@ import DateRangeFilter from '../components/dashboard/DateRangeFilter';
 import GoalSelector from '../components/dashboard/GoalSelector';
 import TransactionList from '../components/transactions/TransactionList';
 import Layout from '../components/common/Layout';
+import StatusIndicator from '../components/dashboard/StatusIndicator';
 
 const Dashboard: React.FC = () => {
   const {
@@ -86,6 +87,10 @@ const Dashboard: React.FC = () => {
 
   return (
     <Layout>
+      {/* Status Indicator Bar */}
+      <div className="flex justify-end px-4 py-2">
+        <StatusIndicator />
+      </div>
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         {/* Filters and Controls */}

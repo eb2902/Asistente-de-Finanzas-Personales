@@ -1,4 +1,5 @@
 import { DataSource } from 'typeorm';
+import { Pool } from 'pg';
 import { User } from '../models/User';
 import { Transaction } from '../models/Transaction';
 import logger from '../utils/logger';
@@ -19,6 +20,12 @@ export const AppDataSource = new DataSource({
     ssl: false,
     application_name: 'asistente-finanzas-backend'
   }
+});
+
+// Create a pg pool for health checks
+export const pool = new Pool({
+  connectionString: databaseUrl,
+  ssl: false,
 });
 
 // Initialize database connection
