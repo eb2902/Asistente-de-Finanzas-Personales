@@ -39,14 +39,42 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Función para validar token JWT
+  const isValidToken = (token: string): boolean => {
+    try {
+      // Decodificar el payload del JWT (segunda parte del token)
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      
+      // Verificar si el token tiene fecha de expiración
+      if (payload.exp) {
+        const currentTime = Math.floor(Date.now() / 1000);
+        // Si el token está expirado, retornar false
+        return payload.exp > currentTime;
+      }
+      
+      // Si no tiene fecha de expiración, asumimos que es válido
+      return true;
+    } catch (error) {
+      // Si hay error al decodificar, el token es inválido
+      return false;
+    }
+  };
+
   useEffect(() => {
     // Check if user is already logged in
     const savedUser = localStorage.getItem('user');
     const savedToken = localStorage.getItem('token');
 
     if (savedUser && savedToken) {
-      setUser(JSON.parse(savedUser));
-      setToken(savedToken);
+      // Validate token before setting user
+      if (isValidToken(savedToken)) {
+        setUser(JSON.parse(savedUser));
+        setToken(savedToken);
+      } else {
+        // Token is invalid or expired, clear storage
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+      }
     }
     setLoading(false);
   }, []);
