@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { CreateTransactionData } from '../services/transactionService';
+import { CreateTransactionData } from '../interfaces/financial';
 
 interface UseTransactionFormProps {
   onSubmit: (data: CreateTransactionData) => Promise<void>;
@@ -13,6 +13,7 @@ interface ValidationResult {
     amount?: string;
     type?: string;
     date?: string;
+    category?: string;
   };
 }
 
@@ -34,21 +35,21 @@ export const useTransactionForm = ({ onSubmit, initialData }: UseTransactionForm
     const newErrors: ValidationResult['errors'] = {};
 
     // Validación de descripción
-    if (!data.description || data.description.trim().length === 0) {
+    if (!data.description || (typeof data.description === 'string' && data.description.trim().length === 0)) {
       newErrors.description = 'La descripción es requerida';
-    } else if (data.description.trim().length < 2) {
+    } else if (typeof data.description === 'string' && data.description.trim().length < 2) {
       newErrors.description = 'La descripción debe tener al menos 2 caracteres';
     }
 
     // Validación de monto
-    if (!data.amount || data.amount <= 0) {
+    if (!data.amount || (typeof data.amount === 'number' && data.amount <= 0)) {
       newErrors.amount = 'El monto debe ser mayor a 0';
-    } else if (data.amount > 1000000) {
+    } else if (typeof data.amount === 'number' && data.amount > 1000000) {
       newErrors.amount = 'El monto no puede ser mayor a 1,000,000';
     }
 
     // Validación de tipo
-    if (!data.type || !['income', 'expense'].includes(data.type)) {
+    if (!data.type || (typeof data.type === 'string' && !['income', 'expense'].includes(data.type))) {
       newErrors.type = 'Tipo de transacción inválido';
     }
 
@@ -62,6 +63,11 @@ export const useTransactionForm = ({ onSubmit, initialData }: UseTransactionForm
       if (date > today) {
         newErrors.date = 'La fecha no puede ser futura';
       }
+    }
+
+    // Validación de categoría
+    if (!data.category || (typeof data.category === 'string' && data.category.trim().length === 0)) {
+      newErrors.category = 'La categoría es requerida';
     }
 
     return {
@@ -78,25 +84,25 @@ export const useTransactionForm = ({ onSubmit, initialData }: UseTransactionForm
     const fieldErrors = { ...errors };
     switch (field) {
       case 'description':
-        if (!value || value.trim().length === 0) {
+        if (!value || (typeof value === 'string' && value.trim().length === 0)) {
           fieldErrors.description = 'La descripción es requerida';
-        } else if (value.trim().length < 2) {
+        } else if (typeof value === 'string' && value.trim().length < 2) {
           fieldErrors.description = 'La descripción debe tener al menos 2 caracteres';
         } else {
           delete fieldErrors.description;
         }
         break;
       case 'amount':
-        if (!value || value <= 0) {
+        if (!value || (typeof value === 'number' && value <= 0)) {
           fieldErrors.amount = 'El monto debe ser mayor a 0';
-        } else if (value > 1000000) {
+        } else if (typeof value === 'number' && value > 1000000) {
           fieldErrors.amount = 'El monto no puede ser mayor a 1,000,000';
         } else {
           delete fieldErrors.amount;
         }
         break;
       case 'type':
-        if (!value || !['income', 'expense'].includes(value)) {
+        if (!value || (typeof value === 'string' && !['income', 'expense'].includes(value))) {
           fieldErrors.type = 'Tipo de transacción inválido';
         } else {
           delete fieldErrors.type;
@@ -115,6 +121,16 @@ export const useTransactionForm = ({ onSubmit, initialData }: UseTransactionForm
             delete fieldErrors.date;
           }
         }
+        break;
+      case 'category':
+        if (!value || (typeof value === 'string' && value.trim().length === 0)) {
+          fieldErrors.category = 'La categoría es requerida';
+        } else {
+          delete fieldErrors.category;
+        }
+        break;
+      case 'merchant':
+        // El campo merchant es opcional, no se valida
         break;
     }
     setErrors(fieldErrors);
@@ -161,7 +177,9 @@ export const useTransactionForm = ({ onSubmit, initialData }: UseTransactionForm
     if (field) {
       setErrors(prev => {
         const newErrors = { ...prev };
-        delete newErrors[field];
+        if (field in newErrors) {
+          delete newErrors[field as keyof typeof newErrors];
+        }
         return newErrors;
       });
     } else {

@@ -3,7 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { X, Save, Loader2, Sparkles } from 'lucide-react';
-import { CreateTransactionData } from '../../services/transactionService';
+import { CreateTransactionData } from '../../interfaces/financial';
 import { transactionService } from '../../services/transactionService';
 
 interface TransactionModalProps {
@@ -262,7 +262,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
               render={({ field }) => (
                 <DatePicker
                   selected={field.value ? new Date(field.value) : null}
-                  onChange={(date) => field.onChange(date?.toISOString().split('T')[0])}
+                  onChange={(date: Date | null) => field.onChange(date?.toISOString().split('T')[0])}
                   dateFormat="dd/MM/yyyy"
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholderText="Seleccionar fecha"

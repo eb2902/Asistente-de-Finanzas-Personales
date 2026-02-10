@@ -5,6 +5,7 @@ export interface Transaction {
   type: 'income' | 'expense';
   category: string;
   date: string;
+  merchant?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -74,4 +75,22 @@ export interface GoalData {
   endDate: string;
   interestRate: number;
   compoundFrequency: number;
+}
+
+export interface CreateTransactionData {
+  description: string;
+  amount: number;
+  type: 'income' | 'expense';
+  category: string;
+  date: string;
+  merchant?: string;
+}
+
+export interface UpdateTransactionData {
+  description: string;
+  amount: number;
+  type: 'income' | 'expense';
+  category: string;
+  date: string;
+  merchant?: string;
 }

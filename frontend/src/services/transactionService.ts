@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Transaction, ApiError } from '../interfaces/financial';
+import { Transaction, ApiError, CreateTransactionData, UpdateTransactionData } from '../interfaces/financial';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
@@ -37,18 +37,6 @@ api.interceptors.response.use(
   }
 );
 
-export interface CreateTransactionData {
-  description: string;
-  amount: number;
-  type: 'income' | 'expense';
-  category?: string;
-  date?: string;
-  merchant?: string;
-}
-
-export interface UpdateTransactionData extends Partial<CreateTransactionData> {
-  id: string;
-}
 
 export interface TransactionResponse {
   success: boolean;

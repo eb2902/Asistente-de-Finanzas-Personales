@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { DashboardData, DateRange, ApiError, GoalData } from '../interfaces/financial';
 import { generateCompoundProjection } from '../utils/compoundInterest';
 import { Transaction } from '../interfaces/financial';
-import { transactionService, CreateTransactionData, UpdateTransactionData } from '../services/transactionService';
+import { transactionService } from '../services/transactionService';
+import { CreateTransactionData, UpdateTransactionData } from '../interfaces/financial';
 import toast from 'react-hot-toast';
 
 interface DashboardState {
@@ -263,7 +264,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         });
       } else {
         set({
-          transactionsError: response.message || 'Error al cargar transacciones',
+          transactionsError: 'Error al cargar transacciones',
           transactionsLoading: false,
         });
       }

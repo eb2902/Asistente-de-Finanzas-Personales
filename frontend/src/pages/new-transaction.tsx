@@ -4,7 +4,7 @@ import Layout from '../components/common/Layout';
 import TransactionModal from '../components/transactions/TransactionModal';
 import { Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { CreateTransactionData } from '../services/transactionService';
+import { CreateTransactionData } from '../interfaces/financial';
 
 const NewTransactionPage: React.FC = () => {
   const {

@@ -144,7 +144,6 @@ const TransactionsPage: React.FC = () => {
         {/* Transaction List */}
         <TransactionList
           onEditTransaction={handleEditTransaction}
-          onDeleteTransaction={handleDeleteTransaction}
           onUpdateSuccess={handleRefresh}
           isLoading={loading}
         />

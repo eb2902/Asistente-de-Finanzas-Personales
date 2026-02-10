@@ -186,10 +186,6 @@ const Dashboard: React.FC = () => {
                 // En el dashboard, solo mostramos información, no permitimos edición directa
                 console.log('Edit transaction:', transaction);
               }}
-              onDeleteTransaction={(transactionId) => {
-                // En el dashboard, solo mostramos información, no permitimos eliminación directa
-                console.log('Delete transaction:', transactionId);
-              }}
               onUpdateSuccess={() => {
                 // Refrescar el dashboard cuando se actualicen transacciones
                 fetchDashboardData();
