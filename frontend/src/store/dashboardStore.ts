@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { DashboardData, DateRange } from '../interfaces/financial';
 import { generateCompoundProjection } from '../utils/compoundInterest';
+import { Transaction } from '../interfaces/financial';
+import { transactionService } from '../services/transactionService';
+import toast from 'react-hot-toast';
 
 interface DashboardState {
   data: DashboardData | null;
@@ -8,6 +11,11 @@ interface DashboardState {
   error: string | null;
   dateRange: DateRange;
   selectedGoal: string | null;
+  transactions: Transaction[];
+  transactionsLoading: boolean;
+  transactionsError: string | null;
+  transactionsPage: number;
+  transactionsTotalPages: number;
   
   // Actions
   setData: (data: DashboardData) => void;
@@ -20,6 +28,18 @@ interface DashboardState {
   updateGoalProjection: (goalId: string) => void;
   applyAISuggestion: (suggestionId: string) => void;
   dismissAISuggestion: (suggestionId: string) => void;
+  
+  // Transaction Actions
+  setTransactions: (transactions: Transaction[]) => void;
+  setTransactionsLoading: (loading: boolean) => void;
+  setTransactionsError: (error: string | null) => void;
+  setTransactionsPage: (page: number) => void;
+  setTransactionsTotalPages: (totalPages: number) => void;
+  fetchTransactions: (page?: number) => Promise<void>;
+  createTransaction: (data: any) => Promise<void>;
+  updateTransaction: (id: string, data: any) => Promise<void>;
+  deleteTransaction: (id: string) => Promise<void>;
+  refreshTransactions: () => Promise<void>;
 }
 
 export const useDashboardStore = create<DashboardState>((set, get) => ({
@@ -185,5 +205,92 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         aiSuggestions: updatedSuggestions,
       },
     });
+  },
+
+  // Transaction Actions Implementation
+  setTransactions: (transactions) => set({ transactions }),
+  setTransactionsLoading: (loading) => set({ transactionsLoading: loading }),
+  setTransactionsError: (error) => set({ transactionsError: error }),
+  setTransactionsPage: (page) => set({ transactionsPage: page }),
+  setTransactionsTotalPages: (totalPages) => set({ transactionsTotalPages: totalPages }),
+
+  fetchTransactions: async (page = 1) => {
+    set({ transactionsLoading: true, transactionsError: null });
+    try {
+      const response = await transactionService.getUserTransactions(page, 10);
+      if (response.success) {
+        set({
+          transactions: response.data.transactions,
+          transactionsPage: response.data.pagination.page,
+          transactionsTotalPages: response.data.pagination.pages,
+          transactionsLoading: false,
+        });
+      } else {
+        set({
+          transactionsError: 'Error al cargar transacciones',
+          transactionsLoading: false,
+        });
+      }
+    } catch (error) {
+      set({
+        transactionsError: 'Error de conexión al cargar transacciones',
+        transactionsLoading: false,
+      });
+    }
+  },
+
+  createTransaction: async (data) => {
+    try {
+      const response = await transactionService.createTransaction(data);
+      if (response.success) {
+        toast.success('Transacción creada exitosamente');
+        // Refrescar la lista de transacciones
+        await get().fetchTransactions(1);
+        // También podríamos refrescar el dashboard completo
+        await get().fetchDashboardData();
+      } else {
+        toast.error(response.message || 'Error al crear la transacción');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Error al crear la transacción');
+    }
+  },
+
+  updateTransaction: async (id, data) => {
+    try {
+      const response = await transactionService.updateTransaction(id, data);
+      if (response.success) {
+        toast.success('Transacción actualizada exitosamente');
+        // Refrescar la lista de transacciones
+        await get().fetchTransactions(get().transactionsPage);
+        // También podríamos refrescar el dashboard completo
+        await get().fetchDashboardData();
+      } else {
+        toast.error(response.message || 'Error al actualizar la transacción');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Error al actualizar la transacción');
+    }
+  },
+
+  deleteTransaction: async (id) => {
+    try {
+      const response = await transactionService.deleteTransaction(id);
+      if (response.success) {
+        toast.success('Transacción eliminada exitosamente');
+        // Refrescar la lista de transacciones
+        await get().fetchTransactions(get().transactionsPage);
+        // También podríamos refrescar el dashboard completo
+        await get().fetchDashboardData();
+      } else {
+        toast.error(response.message || 'Error al eliminar la transacción');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Error al eliminar la transacción');
+    }
+  },
+
+  refreshTransactions: async () => {
+    await get().fetchTransactions(get().transactionsPage);
   },
 }));

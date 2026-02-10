@@ -5,6 +5,9 @@ import GoalProjectionChart from '../components/charts/GoalProjectionChart';
 import AISuggestionsCard from '../components/ai/AISuggestionsCard';
 import DateRangeFilter from '../components/dashboard/DateRangeFilter';
 import GoalSelector from '../components/dashboard/GoalSelector';
+import TransactionList from '../components/transactions/TransactionList';
+import { Plus } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const Dashboard: React.FC = () => {
   const {
@@ -195,46 +198,21 @@ const Dashboard: React.FC = () => {
 
           {/* Recent Transactions */}
           <div className="lg:col-span-2">
-            <div className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
-              <h3 className="text-lg font-semibold text-white mb-4">Transacciones Recientes</h3>
-              <div className="space-y-3">
-                {data.recentTransactions.map((transaction) => (
-                  <div
-                    key={transaction.id}
-                    className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg border border-gray-600 hover:border-gray-500 transition-all duration-200"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-3 h-3 rounded-full ${
-                        transaction.type === 'income' ? 'bg-green-500' : 'bg-red-500'
-                      }`}></div>
-                      <div>
-                        <div className="font-medium text-white">{transaction.description}</div>
-                        <div className="text-sm text-gray-400">{transaction.category}</div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className={`font-semibold ${
-                        transaction.type === 'income' ? 'text-green-400' : 'text-red-400'
-                      }`}>
-                        {transaction.type === 'income' ? '+' : '-'}{new Intl.NumberFormat('es-ES', {
-                          style: 'currency',
-                          currency: 'USD',
-                          minimumFractionDigits: 0,
-                        }).format(transaction.amount)}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {new Date(transaction.date).toLocaleDateString('es-ES')}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 pt-4 border-t border-gray-600 text-center">
-                <button className="text-blue-400 hover:text-blue-300 text-sm">
-                  Ver todas las transacciones
-                </button>
-              </div>
-            </div>
+            <TransactionList
+              onEditTransaction={(transaction) => {
+                // En el dashboard, solo mostramos información, no permitimos edición directa
+                console.log('Edit transaction:', transaction);
+              }}
+              onDeleteTransaction={(transactionId) => {
+                // En el dashboard, solo mostramos información, no permitimos eliminación directa
+                console.log('Delete transaction:', transactionId);
+              }}
+              onUpdateSuccess={() => {
+                // Refrescar el dashboard cuando se actualicen transacciones
+                fetchDashboardData();
+              }}
+              isLoading={loading}
+            />
           </div>
         </div>
       </div>
