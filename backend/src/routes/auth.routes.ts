@@ -157,4 +157,24 @@ router.post('/refresh', authenticateToken, async (req: AuthRequest, res: Respons
   }
 });
 
+/**
+ * @route   POST /api/auth/logout
+ * @desc    Logout user (client-side token removal)
+ * @access  Private
+ */
+router.post('/logout', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    res.json({
+      success: true,
+      message: 'Sesión cerrada exitosamente. Por favor, elimina el token del cliente.'
+    });
+  } catch (error) {
+    logger.error('Logout error:', error);
+    res.status(400).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Error al cerrar sesión'
+    });
+  }
+});
+
 export default router;

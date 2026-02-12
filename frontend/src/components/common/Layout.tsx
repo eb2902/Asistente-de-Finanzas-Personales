@@ -48,11 +48,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     {pathname === '/dashboard' && 'Dashboard Financiero'}
                     {pathname === '/transactions' && 'Gestión de Transacciones'}
                     {pathname === '/goals' && 'Configuración de Metas'}
+                    {pathname === '/new-transaction' && 'Nueva Transacción'}
+                    {pathname === '/analytics' && 'Análisis de Gastos'}
+                    {pathname === '/settings' && 'Configuración'}
+                    {pathname === '/support' && 'Centro de Ayuda'}
                   </h1>
                   <p className="text-gray-400 text-sm">
                     {pathname === '/dashboard' && 'Visión general de tu situación financiera'}
                     {pathname === '/transactions' && 'Administra tus ingresos y gastos'}
                     {pathname === '/goals' && 'Gestiona tus objetivos financieros'}
+                    {pathname === '/new-transaction' && 'Agrega un nuevo ingreso o gasto'}
+                    {pathname === '/analytics' && 'Descubre patrones y optimiza'}
+                    {pathname === '/settings' && 'Personaliza tu experiencia'}
+                    {pathname === '/support' && 'Estamos aquí para ayudarte'}
                   </p>
                 </div>
               </div>
