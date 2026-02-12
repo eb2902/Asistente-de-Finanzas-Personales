@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useDashboardStore } from '../store/dashboardStore';
 import Layout from '../components/common/Layout';
 import { Goal } from '../interfaces/financial';
-import { Plus, Edit, Trash2, TrendingUp } from 'lucide-react';
+import { Plus, Edit, Trash2, TrendingUp, Calculator, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { calculateCompoundInterest, calculateTimeToGoal } from '../utils/compoundInterest';
 
 interface GoalFormData {
   name: string;
@@ -123,6 +124,40 @@ const GoalsPage: React.FC = () => {
     return Math.min((current / target) * 100, 100);
   };
 
+  const calculateProjection = (goal: Goal) => {
+    const { currentAmount, targetAmount, interestRate, compoundFrequency, endDate } = goal;
+    const startDate = new Date();
+    const end = new Date(endDate);
+    const years = Math.max((end.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 365), 0);
+    
+    const futureValue = calculateCompoundInterest({
+      principal: Number(currentAmount),
+      rate: Number(interestRate),
+      time: years,
+      frequency: Number(compoundFrequency),
+    });
+
+    const monthsToGoal = calculateTimeToGoal(
+      Number(currentAmount),
+      Number(targetAmount),
+      Number(interestRate),
+      Number(compoundFrequency)
+    );
+
+    const totalInterest = futureValue - Number(currentAmount);
+
+    return {
+      futureValue: Math.round(futureValue * 100) / 100,
+      totalInterest: Math.round(totalInterest * 100) / 100,
+      years: Math.round(years * 10) / 10,
+      monthsToGoal: Math.round(monthsToGoal),
+      willSurpass: futureValue >= Number(targetAmount),
+    };
+  };
+
+  const firstGoal = data?.goals?.[0];
+  const projection = firstGoal ? calculateProjection(firstGoal) : null;
+
   if (loading) {
     return (
       <Layout>
@@ -237,6 +272,44 @@ const GoalsPage: React.FC = () => {
             );
           })}
         </div>
+
+        {data?.goals && data.goals.length > 0 && projection && (
+          <div className="mt-8 bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-green-500/30">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center">
+              <Calculator className="w-5 h-5 mr-2 text-green-400" />
+              Proyección de Interés Compuesto
+            </h2>
+            <div className="bg-gray-700/50 rounded-lg p-3 mb-4">
+              <p className="text-sm text-gray-400 flex items-center">
+                <Info className="w-4 h-4 mr-1" />
+                Fórmula: A = P(1 + r/n)^(nt)
+              </p>
+              <p className="text-xs text-gray-500">
+                P={formatCurrency(firstGoal!.currentAmount)}, r={(firstGoal!.interestRate * 100).toFixed(1)}%
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-center p-4 bg-green-500/10 rounded-lg border border-green-500/30">
+                <p className="text-sm text-gray-400">Valor Futuro</p>
+                <p className="text-2xl font-bold text-green-400">{formatCurrency(projection.futureValue)}</p>
+                <p className="text-xs text-gray-500">{projection.years} años</p>
+              </div>
+              <div className="text-center p-4 bg-blue-500/10 rounded-lg border border-blue-500/30">
+                <p className="text-sm text-gray-400">Interés Ganado</p>
+                <p className="text-2xl font-bold text-blue-400">+{formatCurrency(projection.totalInterest)}</p>
+              </div>
+              <div className="text-center p-4 bg-purple-500/10 rounded-lg border border-purple-500/30">
+                <p className="text-sm text-gray-400">Tiempo a Meta</p>
+                <p className="text-2xl font-bold text-purple-400">{projection.monthsToGoal} meses</p>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center justify-center p-3 bg-green-500/10 rounded-lg border border-green-500/30">
+              <span className="text-green-400 font-medium">
+                {projection.willSurpass ? '🎉 ¡Alcanzarás tu meta!' : '⚠️ Necesitas aumentar ahorros'}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Empty State */}
         {(!data || data.goals.length === 0) && (
