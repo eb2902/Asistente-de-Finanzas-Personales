@@ -1,6 +1,6 @@
 # Multi-stage build for Next.js frontend
 # Stage 1: Dependencies stage
-FROM node:18-alpine AS deps
+FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat python3 make g++
 WORKDIR /app
 
@@ -9,7 +9,7 @@ COPY ../frontend/package*.json ./
 RUN npm ci && npm cache clean --force
 
 # Stage 2: Build stage
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy dependencies from deps stage
@@ -25,7 +25,7 @@ COPY ../frontend/ ./
 RUN npm run build
 
 # Stage 3: Production stage
-FROM node:18-alpine AS runner
+FROM node:20-alpine AS runner
 
 # Install production dependencies
 RUN apk add --no-cache dumb-init
