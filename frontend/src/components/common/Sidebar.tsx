@@ -7,7 +7,8 @@ import {
   TrendingUp,
   Calendar,
   Home,
-  X
+  X,
+  HelpCircle
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -39,6 +40,24 @@ const navigationItems = [
     href: '/goals',
     icon: TrendingUp,
     description: 'Gestiona tus objetivos'
+  },
+  {
+    name: 'Análisis de Gastos',
+    href: '/analytics',
+    icon: TrendingUp,
+    description: 'Patrones y tendencias'
+  },
+  {
+    name: 'Configuración',
+    href: '/settings',
+    icon: Settings,
+    description: 'Personaliza tu experiencia'
+  },
+  {
+    name: 'Centro de Ayuda',
+    href: '/support',
+    icon: HelpCircle,
+    description: 'Soporte y FAQ'
   }
 ];
 
@@ -122,7 +141,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           <div className="flex items-center justify-between text-sm text-gray-400">
             <span>Versión 1.0.0</span>
             <div className="flex space-x-2">
-              <button className="p-2 hover:bg-gray-700 rounded-lg transition-colors">
+              <button 
+                onClick={() => handleNavigation('/settings')}
+                className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                title="Configuración"
+              >
                 <Settings className="w-4 h-4" />
               </button>
             </div>

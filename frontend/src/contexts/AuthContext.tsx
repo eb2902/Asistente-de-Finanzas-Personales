@@ -149,14 +149,27 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
+  const logout = async () => {
+    try {
+      const apiUrl = getApiUrl();
+      await fetch(`${apiUrl}/api/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+      });
+    } catch {
+      // Error ignorado - el logout local se ejecuta igualmente
+    } finally {
+      setUser(null);
+      setToken(null);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+      }
+      router.push('/login');
     }
-    router.push('/login');
   };
 
   const value: AuthContextType = {

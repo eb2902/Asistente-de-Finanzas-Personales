@@ -1,6 +1,6 @@
 import React from 'react';
 import Layout from '../components/common/Layout';
-import { Settings as SettingsIcon, User, Bell, Shield, CreditCard, Palette } from 'lucide-react';
+import { User, Bell, Shield, Palette } from 'lucide-react';
 
 const SettingsPage: React.FC = () => {
   return (
