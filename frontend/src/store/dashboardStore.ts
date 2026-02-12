@@ -372,66 +372,78 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   // Goal Actions Implementation
   createGoal: async (data: GoalData) => {
     try {
-      // En una implementación real, esto llamaría a un endpoint API
-      const newGoal = {
-        id: `goal_${Date.now()}`,
-        ...data,
-      };
-      
-      const state = get();
-      const updatedGoals = [...state.data!.goals, newGoal];
-      
-      set({
-        data: {
-          ...state.data!,
-          goals: updatedGoals,
-        },
-      });
-      
-      toast.success('Meta creada exitosamente');
+      const response = await goalService.createGoal(data);
+      if (response.success) {
+        const state = get();
+        const updatedGoals = [...state.data!.goals, response.data];
+        
+        set({
+          data: {
+            ...state.data!,
+            goals: updatedGoals,
+          },
+        });
+        
+        toast.success('Meta creada exitosamente');
+      } else {
+        toast.error(response.message || 'Error al crear la meta');
+      }
     } catch (error) {
       const apiError = error as ApiError;
       toast.error(apiError.message || 'Error al crear la meta');
+      throw error;
     }
   },
 
   updateGoal: async (id: string, data: Partial<GoalData>) => {
     try {
-      const state = get();
-      const updatedGoals = state.data!.goals.map(goal => 
-        goal.id === id ? { ...goal, ...data } : goal
-      );
-      
-      set({
-        data: {
-          ...state.data!,
-          goals: updatedGoals,
-        },
-      });
-      
-      toast.success('Meta actualizada exitosamente');
+      const response = await goalService.updateGoal(id, data);
+      if (response.success) {
+        const state = get();
+        const updatedGoals = state.data!.goals.map(goal => 
+          goal.id === id ? { ...goal, ...response.data } : goal
+        );
+        
+        set({
+          data: {
+            ...state.data!,
+            goals: updatedGoals,
+          },
+        });
+        
+        toast.success('Meta actualizada exitosamente');
+      } else {
+        toast.error(response.message || 'Error al actualizar la meta');
+      }
     } catch (error) {
       const apiError = error as ApiError;
       toast.error(apiError.message || 'Error al actualizar la meta');
+      throw error;
     }
   },
 
   deleteGoal: async (id: string) => {
     try {
-      const state = get();
-      const updatedGoals = state.data!.goals.filter(goal => goal.id !== id);
-      
-      set({
-        data: {
-          ...state.data!,
-          goals: updatedGoals,
-        },
-      });
-      
-      toast.success('Meta eliminada exitosamente');
+      const response = await goalService.deleteGoal(id);
+      if (response.success) {
+        const state = get();
+        const updatedGoals = state.data!.goals.filter(goal => goal.id !== id);
+        
+        set({
+          data: {
+            ...state.data!,
+            goals: updatedGoals,
+          },
+        });
+        
+        toast.success('Meta eliminada exitosamente');
+      } else {
+        toast.error(response.message || 'Error al eliminar la meta');
+      }
     } catch (error) {
       const apiError = error as ApiError;
       toast.error(apiError.message || 'Error al eliminar la meta');
+      throw error;
     }
   },
 }));
