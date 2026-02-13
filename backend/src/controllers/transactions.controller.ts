@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { getRepository } from 'typeorm';
+import { AppDataSource } from '../config/database';
 import { Transaction } from '../models/Transaction';
 import { User } from '../models/User';
 import { NLPCategorizationService } from '../services/nlp.service';
@@ -42,7 +42,7 @@ export class TransactionsController {
       const userId = (req as { user?: { id: string } }).user?.id ?? ''; // From auth middleware
 
       // Check if user exists
-      const userRepository = getRepository(User);
+      const userRepository = AppDataSource.getRepository(User);
       const user = await userRepository.findOne({ where: { id: userId } });
       if (!user) {
         res.status(404).json({
@@ -90,7 +90,7 @@ export class TransactionsController {
       }
 
       // Save transaction
-      const transactionRepository = getRepository(Transaction);
+      const transactionRepository = AppDataSource.getRepository(Transaction);
       const savedTransaction = await transactionRepository.save(transaction);
 
       res.status(201).json({
@@ -118,7 +118,7 @@ export class TransactionsController {
       const limit = parseInt(req.query.limit as string) || 10;
       const offset = (page - 1) * limit;
 
-      const transactionRepository = getRepository(Transaction);
+      const transactionRepository = AppDataSource.getRepository(Transaction);
       const [transactions, total] = await transactionRepository.findAndCount({
         where: { userId },
         order: { createdAt: 'DESC' },
@@ -156,7 +156,7 @@ export class TransactionsController {
       const { id } = req.params;
       const userId = (req as { user?: { id: string } }).user?.id || '';
 
-      const transactionRepository = getRepository(Transaction);
+      const transactionRepository = AppDataSource.getRepository(Transaction);
       const transaction = await transactionRepository.findOne({
         where: { id, userId }
       });
@@ -202,7 +202,7 @@ export class TransactionsController {
         return;
       }
 
-      const transactionRepository = getRepository(Transaction);
+      const transactionRepository = AppDataSource.getRepository(Transaction);
       const transaction = await transactionRepository.findOne({
         where: { id, userId }
       });
@@ -269,7 +269,7 @@ export class TransactionsController {
       const { id } = req.params;
       const userId = (req as { user?: { id: string } }).user?.id || '';
 
-      const transactionRepository = getRepository(Transaction);
+      const transactionRepository = AppDataSource.getRepository(Transaction);
       const result = await transactionRepository.delete({
         id,
         userId
@@ -336,7 +336,7 @@ export class TransactionsController {
   async getTransactionStats(req: Request, res: Response): Promise<void> {
     try {
       const userId = (req as { user?: { id: string } }).user?.id;
-      const transactionRepository = getRepository(Transaction);
+      const transactionRepository = AppDataSource.getRepository(Transaction);
 
       // Get total income and expenses
       const [totalIncome, totalExpenses] = await Promise.all([

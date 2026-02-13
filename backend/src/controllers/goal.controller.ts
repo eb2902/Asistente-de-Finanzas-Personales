@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { getRepository } from 'typeorm';
+import { AppDataSource } from '../config/database';
 import { Goal } from '../models/Goal';
 import { User } from '../models/User';
 import Joi from 'joi';
@@ -47,7 +47,7 @@ export class GoalsController {
       const userId = (req as { user?: { id: string } }).user?.id ?? '';
 
       // Check if user exists
-      const userRepository = getRepository(User);
+      const userRepository = AppDataSource.getRepository(User);
       const user = await userRepository.findOne({ where: { id: userId } });
       if (!user) {
         res.status(404).json({
@@ -80,7 +80,7 @@ export class GoalsController {
       }
 
       // Save goal
-      const goalRepository = getRepository(Goal);
+      const goalRepository = AppDataSource.getRepository(Goal);
       const savedGoal = await goalRepository.save(goal);
 
       res.status(201).json({
@@ -105,7 +105,7 @@ export class GoalsController {
     try {
       const userId = (req as { user?: { id: string } }).user?.id || '';
 
-      const goalRepository = getRepository(Goal);
+      const goalRepository = AppDataSource.getRepository(Goal);
       const goals = await goalRepository.find({
         where: { userId },
         order: { createdAt: 'DESC' }
@@ -133,7 +133,7 @@ export class GoalsController {
       const { id } = req.params;
       const userId = (req as { user?: { id: string } }).user?.id || '';
 
-      const goalRepository = getRepository(Goal);
+      const goalRepository = AppDataSource.getRepository(Goal);
       const goal = await goalRepository.findOne({
         where: { id, userId }
       });
@@ -179,7 +179,7 @@ export class GoalsController {
         return;
       }
 
-      const goalRepository = getRepository(Goal);
+      const goalRepository = AppDataSource.getRepository(Goal);
       const goal = await goalRepository.findOne({
         where: { id, userId }
       });
@@ -251,7 +251,7 @@ export class GoalsController {
       const { id } = req.params;
       const userId = (req as { user?: { id: string } }).user?.id || '';
 
-      const goalRepository = getRepository(Goal);
+      const goalRepository = AppDataSource.getRepository(Goal);
       const result = await goalRepository.delete({
         id,
         userId

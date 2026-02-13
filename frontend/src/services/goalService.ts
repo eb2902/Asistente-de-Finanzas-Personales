@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Goal, ApiError, GoalData } from '../interfaces/financial';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001') + '/api';
 
 // Configurar axios con interceptores para manejo de auth
 const api = axios.create({
