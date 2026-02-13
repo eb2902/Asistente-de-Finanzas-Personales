@@ -9,6 +9,9 @@
     "start": "next start",
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
     "docker:build": "docker build -t asistente-finanzas-frontend .",
     "docker:run": "docker run -p 3000:3000 asistente-finanzas-frontend"
   },
@@ -40,6 +43,7 @@
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@playwright/test": "^1.48.0",
     "@types/node": "^20.11.5",
     "@types/react": "^18.2.56",
     "@types/react-dom": "^18.2.19",
