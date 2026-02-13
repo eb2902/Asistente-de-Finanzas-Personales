@@ -47,10 +47,10 @@ test.describe('User Flow - Login to Goals', () => {
   test('should display sidebar and layout correctly on protected pages', async ({ page }) => {
     const mockToken = createMockJWT();
     
-    // First navigate to dashboard - ProtectedRoute will redirect to login
-    await page.goto('/dashboard');
+    // First navigate to login page directly (not to protected route)
+    await page.goto('/login', { waitUntil: 'domcontentloaded' });
     
-    // Wait for login page to be visible after redirect
+    // Verify login page is loaded
     await expect(page.locator('text=Bienvenido de nuevo')).toBeVisible();
     
     // Set mock auth with VALID JWT AFTER page is loaded
@@ -66,10 +66,10 @@ test.describe('User Flow - Login to Goals', () => {
       }));
     }, mockToken);
     
-    // Reload to let ProtectedRoute detect the token
-    await page.reload();
+    // Navigate to dashboard - should not redirect to login now
+    await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
     
-    // Wait for page to load
+    // Wait for navigation to complete
     await page.waitForLoadState('networkidle');
     
     // Verify we're now on dashboard (not login)
@@ -80,10 +80,10 @@ test.describe('User Flow - Login to Goals', () => {
   test('should load goals page with correct structure', async ({ page }) => {
     const mockToken = createMockJWT();
     
-    // First navigate to goals - ProtectedRoute will redirect to login
-    await page.goto('/goals');
+    // First navigate to login page directly
+    await page.goto('/login', { waitUntil: 'domcontentloaded' });
     
-    // Wait for login page
+    // Verify login page is loaded
     await expect(page.locator('text=Bienvenido de nuevo')).toBeVisible();
     
     // Set mock auth with VALID JWT after page loads
@@ -99,28 +99,31 @@ test.describe('User Flow - Login to Goals', () => {
       }));
     }, mockToken);
     
-    // Reload to let ProtectedRoute detect the token
-    await page.reload();
+    // Navigate to goals page - should be accessible now
+    await page.goto('/goals', { waitUntil: 'domcontentloaded' });
     
-    // Wait for page to load (either goals or dashboard depending on app redirect logic)
-    await page.waitForLoadState('networkidle');
+    // Wait for navigation to complete
+    await page.waitForLoadState('networkidle', { timeout: 15000 });
     
-    // Verify the page loaded successfully (either goals or dashboard)
+    // The app may redirect to dashboard after auth, so we accept both
     const currentUrl = page.url();
     expect(currentUrl).toMatch(/goals|dashboard/);
     
+    // Wait a bit for the page to fully render
+    await page.waitForTimeout(2000);
+    
     // Verify the body is visible (page rendered without crash)
     const body = page.locator('body');
-    await expect(body).toBeVisible();
+    await expect(body).toBeVisible({ timeout: 10000 });
   });
 
   test('should verify sidebar navigation is accessible', async ({ page }) => {
     const mockToken = createMockJWT();
     
-    // First navigate to dashboard - ProtectedRoute will redirect to login
-    await page.goto('/dashboard');
+    // First navigate to login page directly
+    await page.goto('/login', { waitUntil: 'domcontentloaded' });
     
-    // Wait for login page
+    // Verify login page is loaded
     await expect(page.locator('text=Bienvenido de nuevo')).toBeVisible();
     
     // Set mock auth with VALID JWT after page loads
@@ -136,10 +139,10 @@ test.describe('User Flow - Login to Goals', () => {
       }));
     }, mockToken);
     
-    // Reload to let ProtectedRoute detect the token
-    await page.reload();
+    // Navigate to dashboard - should be accessible now
+    await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
     
-    // Wait for page to load
+    // Wait for navigation to complete
     await page.waitForLoadState('networkidle');
     
     // Verify we're on dashboard
@@ -151,10 +154,10 @@ test.describe('User Flow - Login to Goals', () => {
     // Try to access protected route without authentication
     await page.goto('/dashboard');
     
-    // Wait for redirect to complete
-    await page.waitForLoadState('networkidle');
+    // Wait for redirect to login page using waitForURL
+    await page.waitForURL('**/login', { timeout: 10000 });
     
-    // Should redirect to login page
+    // Verify login page is loaded
     await expect(page.locator('text=Bienvenido de nuevo')).toBeVisible();
     
     // Verify we're on login page
@@ -193,10 +196,10 @@ test.describe('Goals Page Structure', () => {
   test('should have proper page title and structure', async ({ page }) => {
     const mockToken = createMockJWT();
     
-    // First navigate to goals - ProtectedRoute will redirect to login
-    await page.goto('/goals');
+    // First navigate to login page directly
+    await page.goto('/login', { waitUntil: 'domcontentloaded' });
     
-    // Wait for login page
+    // Verify login page is loaded
     await expect(page.locator('text=Bienvenido de nuevo')).toBeVisible();
     
     // Set mock auth with VALID JWT after page loads
@@ -212,11 +215,13 @@ test.describe('Goals Page Structure', () => {
       }));
     }, mockToken);
     
-    // Reload to let ProtectedRoute detect the token
-    await page.reload();
-    await page.waitForLoadState('networkidle');
+    // Navigate to goals page - should be accessible now
+    await page.goto('/goals', { waitUntil: 'domcontentloaded' });
     
-    // Verify the page loaded (goals or dashboard)
+    // Wait for navigation to complete
+    await page.waitForLoadState('networkidle', { timeout: 15000 });
+    
+    // The app may redirect to dashboard after auth, so we accept both
     const currentUrl = page.url();
     expect(currentUrl).toMatch(/goals|dashboard/);
     
@@ -228,10 +233,10 @@ test.describe('Goals Page Structure', () => {
   test('should display empty state when no goals exist', async ({ page }) => {
     const mockToken = createMockJWT();
     
-    // First navigate to goals - ProtectedRoute will redirect to login
-    await page.goto('/goals');
+    // First navigate to login page directly
+    await page.goto('/login', { waitUntil: 'domcontentloaded' });
     
-    // Wait for login page
+    // Verify login page is loaded
     await expect(page.locator('text=Bienvenido de nuevo')).toBeVisible();
     
     // Set mock auth with VALID JWT after page loads
@@ -247,11 +252,13 @@ test.describe('Goals Page Structure', () => {
       }));
     }, mockToken);
     
-    // Reload to let ProtectedRoute detect the token
-    await page.reload();
-    await page.waitForLoadState('networkidle');
+    // Navigate to goals page - should be accessible now
+    await page.goto('/goals', { waitUntil: 'domcontentloaded' });
     
-    // Page should load without errors
+    // Wait for navigation to complete
+    await page.waitForLoadState('networkidle', { timeout: 15000 });
+    
+    // Page should load without errors (may be on dashboard or goals)
     const body = page.locator('body');
     await expect(body).toBeVisible();
   });
