@@ -24,6 +24,14 @@ router.post('/categorize', transactionsController.categorizeTransaction.bind(tra
 router.post('/', transactionsController.createTransaction.bind(transactionsController));
 router.get('/', transactionsController.getUserTransactions.bind(transactionsController));
 router.get('/stats', transactionsController.getTransactionStats.bind(transactionsController));
+
+// Analytics routes
+router.get('/analytics/projection', transactionsController.getExpenseProjection.bind(transactionsController));
+router.get('/analytics/anomalies', transactionsController.detectAnomalies.bind(transactionsController));
+router.get('/analytics/insights', transactionsController.getAIInsights.bind(transactionsController));
+router.get('/analytics/trend', transactionsController.getMonthlyTrend.bind(transactionsController));
+router.get('/analytics/budget', transactionsController.getBudgetComparison.bind(transactionsController));
+
 router.get('/:id', transactionsController.getTransactionById.bind(transactionsController));
 router.put('/:id', transactionsController.updateTransaction.bind(transactionsController));
 router.delete('/:id', transactionsController.deleteTransaction.bind(transactionsController));

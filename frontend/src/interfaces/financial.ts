@@ -105,3 +105,55 @@ export interface UpdateTransactionData {
   date: string;
   merchant?: string;
 }
+
+// Analytics interfaces
+export interface MonthlyData {
+  month: string;
+  total: number;
+  count: number;
+  average?: number;
+  previousMonthDiff?: number;
+  percentageChange?: number;
+}
+
+export interface ProjectionData {
+  currentMonth: string;
+  projection: number;
+  trend: 'increasing' | 'decreasing' | 'stable';
+  confidence: number;
+  monthlyData: MonthlyData[];
+  method: 'linear_regression' | 'weighted_average';
+}
+
+export interface AnomalyAlert {
+  category: string;
+  currentAmount: number;
+  averageAmount: number;
+  percentageOver: number;
+  severity: 'low' | 'medium' | 'high';
+  message: string;
+}
+
+export interface AnomaliesData {
+  alerts: AnomalyAlert[];
+  analyzedTransactions: number;
+  analysisPeriod: string;
+}
+
+export interface BudgetComparison {
+  category: string;
+  budgeted: number;
+  actual: number;
+  difference: number;
+  percentageUsed: number;
+  status: 'under_budget' | 'on_track' | 'over_budget';
+}
+
+export interface AIInsight {
+  id: string;
+  type: 'warning' | 'positive' | 'info';
+  title: string;
+  message: string;
+  category?: string;
+  priority: number;
+}

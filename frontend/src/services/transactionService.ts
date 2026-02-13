@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Transaction, ApiError, CreateTransactionData } from '../interfaces/financial';
+import { Transaction, ApiError, CreateTransactionData, ProjectionData, AnomaliesData, AIInsight, BudgetComparison, MonthlyData } from '../interfaces/financial';
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001') + '/api';
 
@@ -177,6 +177,80 @@ export const transactionService = {
     } catch (error) {
       const apiError = error as ApiError;
       throw new Error(apiError.response?.data?.message || 'Error al obtener transacciones por rango de fechas');
+    }
+  },
+
+  // Obtener proyección de gastos para el mes siguiente
+  async getExpenseProjection(method: 'linear_regression' | 'weighted_average' = 'weighted_average'): Promise<{
+    success: boolean;
+    data: ProjectionData;
+  }> {
+    try {
+      const response = await api.get<{ success: boolean; data: ProjectionData }>('/transactions/analytics/projection', {
+        params: { method }
+      });
+      return response.data;
+    } catch (error) {
+      const apiError = error as ApiError;
+      throw new Error(apiError.response?.data?.message || 'Error al obtener proyección');
+    }
+  },
+
+  // Detectar anomalías en gastos
+  async detectAnomalies(): Promise<{
+    success: boolean;
+    data: AnomaliesData;
+  }> {
+    try {
+      const response = await api.get<{ success: boolean; data: AnomaliesData }>('/transactions/analytics/anomalies');
+      return response.data;
+    } catch (error) {
+      const apiError = error as ApiError;
+      throw new Error(apiError.response?.data?.message || 'Error al detectar anomalías');
+    }
+  },
+
+  // Obtener insights de IA
+  async getAIInsights(): Promise<{
+    success: boolean;
+    data: AIInsight[];
+  }> {
+    try {
+      const response = await api.get<{ success: boolean; data: AIInsight[] }>('/transactions/analytics/insights');
+      return response.data;
+    } catch (error) {
+      const apiError = error as ApiError;
+      throw new Error(apiError.response?.data?.message || 'Error al obtener insights');
+    }
+  },
+
+  // Obtener tendencia mensual
+  async getMonthlyTrend(months: number = 6): Promise<{
+    success: boolean;
+    data: MonthlyData[];
+  }> {
+    try {
+      const response = await api.get<{ success: boolean; data: MonthlyData[] }>('/transactions/analytics/trend', {
+        params: { months }
+      });
+      return response.data;
+    } catch (error) {
+      const apiError = error as ApiError;
+      throw new Error(apiError.response?.data?.message || 'Error al obtener tendencia');
+    }
+  },
+
+  // Obtener comparación presupuesto vs real
+  async getBudgetComparison(): Promise<{
+    success: boolean;
+    data: BudgetComparison[];
+  }> {
+    try {
+      const response = await api.get<{ success: boolean; data: BudgetComparison[] }>('/transactions/analytics/budget');
+      return response.data;
+    } catch (error) {
+      const apiError = error as ApiError;
+      throw new Error(apiError.response?.data?.message || 'Error al obtener comparación de presupuesto');
     }
   }
 };

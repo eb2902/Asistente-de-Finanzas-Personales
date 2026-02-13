@@ -3,6 +3,7 @@ import { AppDataSource } from '../config/database';
 import { Transaction } from '../models/Transaction';
 import { User } from '../models/User';
 import { NLPCategorizationService } from '../services/nlp.service';
+import AnalyticsService from '../services/analytics.service';
 import Joi from 'joi';
 import logger from '../utils/logger';
 
@@ -21,6 +22,7 @@ const categorizeTransactionSchema = Joi.object({
 
 export class TransactionsController {
   private nlpService = new NLPCategorizationService();
+  private analyticsService = new AnalyticsService();
 
   /**
    * Create a new transaction with optional AI categorization
@@ -379,6 +381,123 @@ export class TransactionsController {
 
     } catch (error) {
       logger.error('Error getting transaction stats:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+  /**
+   * Get expense projection for the next month
+   */
+  async getExpenseProjection(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as { user?: { id: string } }).user?.id || '';
+      const method = (req.query.method as 'linear_regression' | 'weighted_average') || 'weighted_average';
+
+      const projection = await this.analyticsService.calculateProjection(userId, method);
+
+      res.json({
+        success: true,
+        data: projection
+      });
+
+    } catch (error) {
+      logger.error('Error getting expense projection:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+  /**
+   * Detect anomalies in spending
+   */
+  async detectAnomalies(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as { user?: { id: string } }).user?.id || '';
+
+      const anomalies = await this.analyticsService.detectAnomalies(userId);
+
+      res.json({
+        success: true,
+        data: anomalies
+      });
+
+    } catch (error) {
+      logger.error('Error detecting anomalies:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+  /**
+   * Get AI-powered insights
+   */
+  async getAIInsights(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as { user?: { id: string } }).user?.id || '';
+
+      const insights = await this.analyticsService.generateAIInsights(userId);
+
+      res.json({
+        success: true,
+        data: insights
+      });
+
+    } catch (error) {
+      logger.error('Error getting AI insights:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+  /**
+   * Get monthly trend data for charts
+   */
+  async getMonthlyTrend(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as { user?: { id: string } }).user?.id || '';
+      const months = parseInt(req.query.months as string) || 6;
+
+      const trend = await this.analyticsService.getMonthlyTrend(userId, months);
+
+      res.json({
+        success: true,
+        data: trend
+      });
+
+    } catch (error) {
+      logger.error('Error getting monthly trend:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+  /**
+   * Get budget vs actual comparison
+   */
+  async getBudgetComparison(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as { user?: { id: string } }).user?.id || '';
+
+      const comparison = await this.analyticsService.getBudgetComparison(userId);
+
+      res.json({
+        success: true,
+        data: comparison
+      });
+
+    } catch (error) {
+      logger.error('Error getting budget comparison:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
