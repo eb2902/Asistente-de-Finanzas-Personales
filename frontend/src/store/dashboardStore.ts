@@ -115,7 +115,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
       // Procesar metas
       if (goalsResponse.status === 'fulfilled' && goalsResponse.value.success) {
-        goals = goalsResponse.value.data;
+        goals = goalsResponse.value.data.goals;
       }
 
       // Calcular métricas del dashboard

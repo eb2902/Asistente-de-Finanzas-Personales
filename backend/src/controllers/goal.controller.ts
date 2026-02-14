@@ -99,21 +99,34 @@ export class GoalsController {
   }
 
   /**
-   * Get all goals for the authenticated user
+   * Get all goals for the authenticated user with pagination
    */
   async getUserGoals(req: Request, res: Response): Promise<void> {
     try {
       const userId = (req as { user?: { id: string } }).user?.id || '';
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const offset = (page - 1) * limit;
 
       const goalRepository = AppDataSource.getRepository(Goal);
-      const goals = await goalRepository.find({
+      const [goals, total] = await goalRepository.findAndCount({
         where: { userId },
-        order: { createdAt: 'DESC' }
+        order: { createdAt: 'DESC' },
+        take: limit,
+        skip: offset
       });
 
       res.json({
         success: true,
-        data: goals.map(g => g.toJSON())
+        data: {
+          goals: goals.map(g => g.toJSON()),
+          pagination: {
+            page,
+            limit,
+            total,
+            pages: Math.ceil(total / limit)
+          }
+        }
       });
 
     } catch (error) {

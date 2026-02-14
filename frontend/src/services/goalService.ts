@@ -45,7 +45,15 @@ export interface GoalResponse {
 
 export interface GoalsResponse {
   success: boolean;
-  data: Goal[];
+  data: {
+    goals: Goal[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
+  };
 }
 
 export const goalService = {
@@ -60,10 +68,15 @@ export const goalService = {
     }
   },
 
-  // Obtener todas las metas del usuario
-  async getUserGoals(): Promise<GoalsResponse> {
+  // Obtener todas las metas del usuario con paginación
+  async getUserGoals(page?: number, limit?: number): Promise<GoalsResponse> {
     try {
-      const response = await api.get<GoalsResponse>('/goals');
+      const params = new URLSearchParams();
+      if (page) params.append('page', page.toString());
+      if (limit) params.append('limit', limit.toString());
+      
+      const url = params.toString() ? `/goals?${params.toString()}` : '/goals';
+      const response = await api.get<GoalsResponse>(url);
       return response.data;
     } catch (error) {
       const apiError = error as ApiError;
