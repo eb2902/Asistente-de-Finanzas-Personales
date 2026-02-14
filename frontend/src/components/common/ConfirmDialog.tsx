@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { X, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 
 interface ConfirmDialogProps {
@@ -6,7 +6,7 @@ interface ConfirmDialogProps {
   onClose: () => void;
   onConfirm: () => void;
   title: string;
-  description: string;
+  description: ReactNode;
   confirmText?: string;
   cancelText?: string;
   type?: 'danger' | 'warning' | 'info' | 'success';
@@ -75,9 +75,13 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 
         {/* Content */}
         <div className="p-6">
-          <p className="text-gray-300 text-sm leading-relaxed">
-            {description}
-          </p>
+          {typeof description === 'string' ? (
+            <p className="text-gray-300 text-sm leading-relaxed">
+              {description}
+            </p>
+          ) : (
+            description
+          )}
         </div>
 
         {/* Actions */}

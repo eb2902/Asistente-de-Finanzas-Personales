@@ -174,4 +174,236 @@ router.post('/logout', authenticateToken, async (req: AuthRequest, res: Response
   }
 });
 
+// Validation schemas for profile updates
+const updateProfileSchema = Joi.object({
+  name: Joi.string().min(2).max(50).required(),
+  email: Joi.string().email().required()
+});
+
+const changePasswordSchema = Joi.object({
+  currentPassword: Joi.string().required(),
+  newPassword: Joi.string().min(6).required()
+});
+
+const updatePreferencesSchema = Joi.object({
+  theme: Joi.string().valid('dark', 'light', 'system').optional(),
+  currency: Joi.string().valid('USD', 'EUR', 'ARS', 'MXN').optional(),
+  language: Joi.string().valid('es', 'en', 'pt').optional()
+});
+
+const updateNotificationsSchema = Joi.object({
+  emailAlerts: Joi.boolean().optional(),
+  goalReminders: Joi.boolean().optional(),
+  weeklySummary: Joi.boolean().optional(),
+  aiSuggestions: Joi.boolean().optional()
+});
+
+/**
+ * @route   PUT /api/auth/profile
+ * @desc    Update user profile (name and email)
+ * @access  Private
+ */
+router.put('/profile', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        error: 'Usuario no autenticado'
+      });
+      return;
+    }
+
+    // Validate request body
+    const { error, value } = updateProfileSchema.validate(req.body);
+    
+    if (error) {
+      res.status(400).json({
+        success: false,
+        error: 'Validación fallida',
+        details: error.details.map(detail => detail.message)
+      });
+      return;
+    }
+
+    const { name, email } = value;
+    const updatedUser = await AuthService.updateProfile(req.user.id, name, email);
+
+    res.json({
+      success: true,
+      message: 'Perfil actualizado exitosamente',
+      data: updatedUser.toJSON()
+    });
+
+  } catch (error) {
+    logger.error('Update profile error:', error);
+    res.status(400).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Error al actualizar perfil'
+    });
+  }
+});
+
+/**
+ * @route   PUT /api/auth/password
+ * @desc    Change user password
+ * @access  Private
+ */
+router.put('/password', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        error: 'Usuario no autenticado'
+      });
+      return;
+    }
+
+    // Validate request body
+    const { error, value } = changePasswordSchema.validate(req.body);
+    
+    if (error) {
+      res.status(400).json({
+        success: false,
+        error: 'Validación fallida',
+        details: error.details.map(detail => detail.message)
+      });
+      return;
+    }
+
+    const { currentPassword, newPassword } = value;
+    await AuthService.changePassword(req.user.id, currentPassword, newPassword);
+
+    res.json({
+      success: true,
+      message: 'Contraseña actualizada exitosamente'
+    });
+
+  } catch (error) {
+    logger.error('Change password error:', error);
+    res.status(400).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Error al cambiar contraseña'
+    });
+  }
+});
+
+/**
+ * @route   PUT /api/auth/preferences
+ * @desc    Update user preferences (theme, currency, language)
+ * @access  Private
+ */
+router.put('/preferences', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        error: 'Usuario no autenticado'
+      });
+      return;
+    }
+
+    // Validate request body
+    const { error, value } = updatePreferencesSchema.validate(req.body);
+    
+    if (error) {
+      res.status(400).json({
+        success: false,
+        error: 'Validación fallida',
+        details: error.details.map(detail => detail.message)
+      });
+      return;
+    }
+
+    const updatedUser = await AuthService.updatePreferences(req.user.id, value);
+
+    res.json({
+      success: true,
+      message: 'Preferencias actualizadas exitosamente',
+      data: updatedUser.toJSON()
+    });
+
+  } catch (error) {
+    logger.error('Update preferences error:', error);
+    res.status(400).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Error al actualizar preferencias'
+    });
+  }
+});
+
+/**
+ * @route   PUT /api/auth/notifications
+ * @desc    Update user notifications
+ * @access  Private
+ */
+router.put('/notifications', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        error: 'Usuario no autenticado'
+      });
+      return;
+    }
+
+    // Validate request body
+    const { error, value } = updateNotificationsSchema.validate(req.body);
+    
+    if (error) {
+      res.status(400).json({
+        success: false,
+        error: 'Validación fallida',
+        details: error.details.map(detail => detail.message)
+      });
+      return;
+    }
+
+    const updatedUser = await AuthService.updateNotifications(req.user.id, value);
+
+    res.json({
+      success: true,
+      message: 'Notificaciones actualizadas exitosamente',
+      data: updatedUser.toJSON()
+    });
+
+  } catch (error) {
+    logger.error('Update notifications error:', error);
+    res.status(400).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Error al actualizar notificaciones'
+    });
+  }
+});
+
+/**
+ * @route   DELETE /api/auth/account
+ * @desc    Delete user account
+ * @access  Private
+ */
+router.delete('/account', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        error: 'Usuario no autenticado'
+      });
+      return;
+    }
+
+    await AuthService.deleteAccount(req.user.id);
+
+    res.json({
+      success: true,
+      message: 'Cuenta eliminada exitosamente'
+    });
+
+  } catch (error) {
+    logger.error('Delete account error:', error);
+    res.status(400).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Error al eliminar cuenta'
+    });
+  }
+});
+
 export default router;

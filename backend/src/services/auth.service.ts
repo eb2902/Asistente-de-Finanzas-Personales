@@ -125,4 +125,124 @@ export class AuthService {
 
     return user;
   }
+
+  /**
+   * Update user profile (name and email)
+   */
+  static async updateProfile(userId: string, name: string, email: string): Promise<User> {
+    const user = await userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new Error('Usuario no encontrado');
+    }
+
+    // Check if email is already taken by another user
+    if (email !== user.email) {
+      const existingUser = await userRepository.findOne({ where: { email } });
+      if (existingUser) {
+        throw new Error('El correo electrónico ya está en uso');
+      }
+    }
+
+    user.name = name;
+    user.email = email;
+
+    const updatedUser = await userRepository.save(user);
+    return updatedUser;
+  }
+
+  /**
+   * Change user password
+   */
+  static async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+    const user = await userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new Error('Usuario no encontrado');
+    }
+
+    // Verify current password
+    const isPasswordValid = await user.comparePassword(currentPassword);
+    if (!isPasswordValid) {
+      throw new Error('La contraseña actual es incorrecta');
+    }
+
+    // Update password
+    user.password = newPassword;
+    await user.hashPassword();
+    await userRepository.save(user);
+  }
+
+  /**
+   * Update user preferences (theme, currency, language)
+   */
+  static async updatePreferences(userId: string, preferences: {
+    theme?: string;
+    currency?: string;
+    language?: string;
+  }): Promise<User> {
+    const user = await userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new Error('Usuario no encontrado');
+    }
+
+    if (preferences.theme) {
+      user.theme = preferences.theme;
+    }
+    if (preferences.currency) {
+      user.currency = preferences.currency;
+    }
+    if (preferences.language) {
+      user.language = preferences.language;
+    }
+
+    const updatedUser = await userRepository.save(user);
+    return updatedUser;
+  }
+
+  /**
+   * Update user notifications
+   */
+  static async updateNotifications(userId: string, notifications: {
+    emailAlerts?: boolean;
+    goalReminders?: boolean;
+    weeklySummary?: boolean;
+    aiSuggestions?: boolean;
+  }): Promise<User> {
+    const user = await userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new Error('Usuario no encontrado');
+    }
+
+    if (notifications.emailAlerts !== undefined) {
+      user.emailAlerts = notifications.emailAlerts;
+    }
+    if (notifications.goalReminders !== undefined) {
+      user.goalReminders = notifications.goalReminders;
+    }
+    if (notifications.weeklySummary !== undefined) {
+      user.weeklySummary = notifications.weeklySummary;
+    }
+    if (notifications.aiSuggestions !== undefined) {
+      user.aiSuggestions = notifications.aiSuggestions;
+    }
+
+    const updatedUser = await userRepository.save(user);
+    return updatedUser;
+  }
+
+  /**
+   * Delete user account
+   */
+  static async deleteAccount(userId: string): Promise<void> {
+    const user = await userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new Error('Usuario no encontrado');
+    }
+
+    await userRepository.remove(user);
+  }
 }

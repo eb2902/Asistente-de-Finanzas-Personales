@@ -2,11 +2,26 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useRouter } from 'next/navigation';
 import { getApiUrl } from '../utils/api';
 
+interface UserPreferences {
+  theme: 'dark' | 'light' | 'system';
+  currency: 'USD' | 'EUR' | 'ARS' | 'MXN';
+  language: 'es' | 'en' | 'pt';
+}
+
+interface UserNotifications {
+  emailAlerts: boolean;
+  goalReminders: boolean;
+  weeklySummary: boolean;
+  aiSuggestions: boolean;
+}
+
 interface User {
   id: string;
   email: string;
   name: string;
   isActive: boolean;
+  preferences?: UserPreferences;
+  notifications?: UserNotifications;
   createdAt: string;
   updatedAt: string;
 }
@@ -19,6 +34,12 @@ interface AuthContextType {
   register: (email: string, password: string, name: string) => Promise<boolean>;
   logout: () => void;
   loading: boolean;
+  updateProfile: (name: string, email: string) => Promise<boolean>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
+  updatePreferences: (preferences: Partial<UserPreferences>) => Promise<boolean>;
+  updateNotifications: (notifications: Partial<UserNotifications>) => Promise<boolean>;
+  deleteAccount: () => Promise<boolean>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -172,6 +193,174 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const refreshUser = async () => {
+    if (!token) return;
+    
+    try {
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/api/auth/profile`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setUser(data.data);
+        localStorage.setItem('user', JSON.stringify(data.data));
+      }
+    } catch {
+      // Silent fail - user data refresh is non-critical
+    }
+  };
+
+  const updateProfile = async (name: string, email: string): Promise<boolean> => {
+    if (!token) return false;
+
+    try {
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/api/auth/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ name, email })
+      });
+
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setUser(data.data);
+        localStorage.setItem('user', JSON.stringify(data.data));
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  const changePassword = async (currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
+    if (!token) return { success: false, error: 'No autenticado' };
+
+    try {
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/api/auth/password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+
+      const data = await response.json();
+      if (response.ok && data.success) {
+        return { success: true };
+      }
+      return { success: false, error: data.error || 'Error al cambiar contraseña' };
+    } catch {
+      return { success: false, error: 'Error de conexión' };
+    }
+  };
+
+  const updatePreferences = async (preferences: Partial<UserPreferences>): Promise<boolean> => {
+    if (!token) return false;
+
+    try {
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/api/auth/preferences`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(preferences)
+      });
+
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setUser(data.data);
+        localStorage.setItem('user', JSON.stringify(data.data));
+        
+        // Save preferences to localStorage for quick access
+        if (preferences.theme) {
+          localStorage.setItem('theme', preferences.theme);
+        }
+        if (preferences.currency) {
+          localStorage.setItem('currency', preferences.currency);
+        }
+        if (preferences.language) {
+          localStorage.setItem('language', preferences.language);
+        }
+        
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  const updateNotifications = async (notifications: Partial<UserNotifications>): Promise<boolean> => {
+    if (!token) return false;
+
+    try {
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/api/auth/notifications`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(notifications)
+      });
+
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setUser(data.data);
+        localStorage.setItem('user', JSON.stringify(data.data));
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  const deleteAccount = async (): Promise<boolean> => {
+    if (!token) return false;
+
+    try {
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/api/auth/account`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        // Force logout after account deletion
+        setUser(null);
+        setToken(null);
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
+          localStorage.removeItem('theme');
+          localStorage.removeItem('currency');
+          localStorage.removeItem('language');
+        }
+        router.push('/login');
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
   const value: AuthContextType = {
     user,
     token,
@@ -180,6 +369,12 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     loading,
+    updateProfile,
+    changePassword,
+    updatePreferences,
+    updateNotifications,
+    deleteAccount,
+    refreshUser,
   };
 
   return (
