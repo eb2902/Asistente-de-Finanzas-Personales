@@ -14,6 +14,7 @@ const createTransactionSchema = Joi.object({
   type: Joi.string().valid('income', 'expense').required(),
   category: Joi.string().optional(),
   merchant: Joi.string().optional(),
+  date: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
 const categorizeTransactionSchema = Joi.object({
@@ -40,7 +41,7 @@ export class TransactionsController {
         return;
       }
 
-      const { description, amount, type, merchant } = value;
+      const { description, amount, type, merchant, date } = value;
       const userId = (req as { user?: { id: string } }).user?.id ?? ''; // From auth middleware
 
       // Check if user exists
@@ -61,6 +62,8 @@ export class TransactionsController {
       transaction.type = type;
       transaction.merchant = merchant || null;
       transaction.userId = userId;
+      // Use provided date or default to today's date (YYYY-MM-DD format)
+      transaction.date = date || new Date().toISOString().split('T')[0];
 
       // Validate transaction data
       const validationErrors = transaction.validate();
@@ -222,6 +225,10 @@ export class TransactionsController {
       transaction.amount = value.amount;
       transaction.type = value.type;
       transaction.merchant = value.merchant || null;
+      // Update date if provided
+      if (value.date) {
+        transaction.date = value.date;
+      }
 
       // Re-categorize if description changed and it's an expense
       if (transaction.type === 'expense' && transaction.description !== value.description) {
