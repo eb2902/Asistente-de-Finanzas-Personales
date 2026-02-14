@@ -1,5 +1,6 @@
 import { AppDataSource } from '../config/database';
 import { Transaction } from '../models/Transaction';
+import { Budget } from '../models/Budget';
 import logger from '../utils/logger';
 
 export interface MonthlyData {
@@ -46,6 +47,7 @@ export interface BudgetComparison {
   difference: number;
   percentageUsed: number;
   status: 'under_budget' | 'on_track' | 'over_budget';
+  isCustomBudget?: boolean;
 }
 
 export interface MonthlyTrendData {
@@ -563,17 +565,53 @@ export class AnalyticsService {
 
   /**
    * Obtiene datos de comparación presupuesto vs real
-   * (Por ahora retorna datos basados en el historial, sin presupuestos definidos)
+   * Usa presupuestos personalizados del usuario, o fallback histórico si no existen
    */
   async getBudgetComparison(userId: string): Promise<BudgetComparison[]> {
     try {
       const currentMonthData = await this.getCurrentMonthCategoryExpenses(userId);
       const historicalData = await this.getHistoricalCategoryExpenses(userId);
+      const budgetRepository = AppDataSource.getRepository(Budget);
 
-      // Usar el promedio histórico como "presupuesto" base
+      // Obtener el mes actual en formato YYYY-MM
+      const currentMonth = new Date().toISOString().slice(0, 7);
+
+      // Obtener presupuestos personalizados del usuario (del mes actual o generales)
+      const customBudgets = await budgetRepository
+        .createQueryBuilder('b')
+        .where('b.userId = :userId', { userId })
+        .andWhere('(b.month = :month OR b.month IS NULL)', { month: currentMonth })
+        .getMany();
+
+      // Crear mapa de presupuestos personalizados
+      const customBudgetMap = new Map<string, number>();
+      for (const budget of customBudgets) {
+        // Si hay presupuesto del mes específico, usarlo; si no, usar el general
+        if (!customBudgetMap.has(budget.category) || (budget.month === currentMonth)) {
+          customBudgetMap.set(budget.category, Number(budget.amount));
+        }
+      }
+
+      // Construir comparación
       return currentMonthData.map(current => {
+        // Usar presupuesto personalizado si existe, sino usar fallback histórico
+        const customBudget = customBudgetMap.get(current.category);
         const historical = historicalData.find(h => h.category === current.category);
-        const budgeted = historical ? historical.total * 1.1 : current.total * 1.1; // 10% más que el promedio
+        
+        let budgeted: number;
+        let isCustom = false;
+
+        if (customBudget !== undefined) {
+          budgeted = customBudget;
+          isCustom = true;
+        } else if (historical) {
+          // Fallback: 10% más que el promedio histórico
+          budgeted = historical.total * 1.1;
+        } else {
+          // Último recurso: 10% más que el gasto actual
+          budgeted = current.total * 1.1;
+        }
+
         const difference = budgeted - current.total;
         const percentageUsed = budgeted > 0 ? (current.total / budgeted) * 100 : 0;
 
@@ -593,6 +631,7 @@ export class AnalyticsService {
           difference: Math.round(difference * 100) / 100,
           percentageUsed: Math.round(percentageUsed * 100) / 100,
           status,
+          isCustomBudget: isCustom,
         };
       });
     } catch (error) {

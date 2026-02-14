@@ -3,6 +3,7 @@ import { Pool } from 'pg';
 import { User } from '../models/User';
 import { Transaction } from '../models/Transaction';
 import { Goal } from '../models/Goal';
+import { Budget } from '../models/Budget';
 import logger from '../utils/logger';
 
 // Cargar dotenv para asegurar que las variables de entorno estén disponibles
@@ -13,7 +14,7 @@ const databaseUrl = process.env.DATABASE_URL || 'postgresql://postgres:postgres@
 export const AppDataSource = new DataSource({
   type: 'postgres',
   url: databaseUrl,
-  entities: [User, Transaction, Goal],
+  entities: [User, Transaction, Goal, Budget],
   migrations: [__dirname + '/../migrations/*.ts'],
   synchronize: process.env.NODE_ENV === 'development',
   logging: process.env.NODE_ENV === 'development',

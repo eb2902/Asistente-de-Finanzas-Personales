@@ -9,6 +9,7 @@ import logger from './utils/logger';
 import authRoutes from './routes/auth.routes';
 import transactionRoutes from './routes/transactions.routes';
 import goalRoutes from './routes/goal.routes';
+import budgetRoutes from './routes/budget.routes';
 import { initializeDatabase } from './config/database';
 import { validateEnvironmentAtStartup } from './middleware/env-validation.middleware';
 
@@ -35,6 +36,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/goals', goalRoutes);
+app.use('/api/budgets', budgetRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
