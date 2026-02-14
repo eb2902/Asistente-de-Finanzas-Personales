@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
 import { authenticateToken, AuthRequest } from '../middleware/auth.middleware';
+import { authLimiter } from '../middleware/rate-limit.middleware';
 import Joi from 'joi';
 import logger from '../utils/logger';
 
@@ -18,12 +19,8 @@ const loginSchema = Joi.object({
   password: Joi.string().required()
 });
 
-/**
- * @route   POST /api/auth/register
- * @desc    Register a new user
- * @access  Public
- */
-router.post('/register', async (req: Request, res: Response): Promise<void> => {
+// Apply auth rate limiter to register and login routes
+router.post('/register', authLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
     // Validate request body
     const { error, value } = registerSchema.validate(req.body);
@@ -61,7 +58,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
  * @desc    Login user
  * @access  Public
  */
-router.post('/login', async (req: Request, res: Response): Promise<void> => {
+router.post('/login', authLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
     // Validate request body
     const { error, value } = loginSchema.validate(req.body);
