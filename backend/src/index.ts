@@ -13,6 +13,7 @@ import budgetRoutes from './routes/budget.routes';
 import { initializeDatabase } from './config/database';
 import { validateEnvironmentAtStartup } from './middleware/env-validation.middleware';
 import { apiLimiter } from './middleware/rate-limit.middleware';
+import { requestLogger } from './middleware/request-logger.middleware';
 
 // Load environment variables
 dotenv.config();
@@ -32,6 +33,9 @@ app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Request logging middleware (antes de las rutas)
+app.use(requestLogger);
 
 // Rate limiting - aplicar a todas las rutas API
 app.use('/api', apiLimiter);
