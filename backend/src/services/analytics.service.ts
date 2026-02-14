@@ -78,16 +78,21 @@ export class AnalyticsService {
    */
   async getMonthlyExpenses(userId: string, months: number = 3): Promise<MonthlyData[]> {
     try {
+      // Calcular la fecha de inicio en JavaScript para evitar problemas con INTERVAL en TypeORM
+      const startDate = new Date();
+      startDate.setMonth(startDate.getMonth() - months);
+      const startDateStr = startDate.toISOString().slice(0, 10); // YYYY-MM-DD
+      
       const result = await this.transactionRepository
         .createQueryBuilder('t')
-        .select("TO_CHAR(TO_DATE(t.date, 'YYYY-MM-DD'), 'YYYY-MM')", 'month')
+        .select("TO_CHAR(t.date, 'YYYY-MM')", 'month')
         .addSelect('SUM(t.amount)', 'total')
         .addSelect('COUNT(t.id)', 'count')
         .where('t.userId = :userId', { userId })
         .andWhere('t.type = :type', { type: 'expense' })
-        .andWhere("t.date >= TO_CHAR(CURRENT_DATE - (:months || ' months')::interval, 'YYYY-MM-DD')", { months })
+        .andWhere('t.date >= :startDate', { startDate: startDateStr })
         .andWhere('t.date IS NOT NULL')
-        .groupBy("TO_CHAR(TO_DATE(t.date, 'YYYY-MM-DD'), 'YYYY-MM')")
+        .groupBy("TO_CHAR(t.date, 'YYYY-MM')")
         .orderBy('month', 'ASC')
         .getRawMany();
 
@@ -107,7 +112,13 @@ export class AnalyticsService {
    */
   async getCurrentMonthCategoryExpenses(userId: string): Promise<CategoryData[]> {
     try {
-      const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth() + 1;
+      const startDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
+      
+      // Calcular el último día del mes actual
+      const lastDay = new Date(currentYear, currentMonth, 0).getDate();
+      const endDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
       
       const result = await this.transactionRepository
         .createQueryBuilder('t')
@@ -117,7 +128,8 @@ export class AnalyticsService {
         .addSelect('AVG(t.amount)', 'average')
         .where('t.userId = :userId', { userId })
         .andWhere('t.type = :type', { type: 'expense' })
-        .andWhere('t.date LIKE :month', { month: `${currentMonth}%` })
+        .andWhere('t.date >= :startDate', { startDate })
+        .andWhere('t.date <= :endDate', { endDate })
         .andWhere('t.category IS NOT NULL')
         .groupBy('t.category')
         .orderBy('total', 'DESC')
@@ -140,6 +152,11 @@ export class AnalyticsService {
    */
   async getHistoricalCategoryExpenses(userId: string): Promise<CategoryData[]> {
     try {
+      // Calcular la fecha de inicio (hace 3 meses) en JavaScript
+      const startDate = new Date();
+      startDate.setMonth(startDate.getMonth() - 3);
+      const startDateStr = startDate.toISOString().slice(0, 10); // YYYY-MM-DD
+      
       const result = await this.transactionRepository
         .createQueryBuilder('t')
         .select('t.category', 'category')
@@ -148,7 +165,7 @@ export class AnalyticsService {
         .addSelect('AVG(t.amount)', 'average')
         .where('t.userId = :userId', { userId })
         .andWhere('t.type = :type', { type: 'expense' })
-        .andWhere("t.date >= TO_CHAR(CURRENT_DATE - '3 months'::interval, 'YYYY-MM-DD')")
+        .andWhere('t.date >= :startDate', { startDate: startDateStr })
         .andWhere('t.category IS NOT NULL')
         .groupBy('t.category')
         .orderBy('total', 'DESC')
