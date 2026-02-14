@@ -25,7 +25,7 @@ const categorizeTransactionSchema = Joi.object({
 const dateRangeSchema = Joi.object({
   startDate: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).optional(),
   endDate: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).optional(),
-}).with('startDate', 'endDate');
+});
 
 // Helper function to validate date range query params
 function validateDateRange(query: Record<string, unknown>): { 
@@ -34,6 +34,11 @@ function validateDateRange(query: Record<string, unknown>): {
   endDate?: string; 
   error?: string;
 } {
+  // If no date parameters are provided, allow the request without error
+  if (!query.startDate && !query.endDate) {
+    return { valid: true, startDate: undefined, endDate: undefined };
+  }
+  
   const { error, value } = dateRangeSchema.validate(query);
   
   if (error) {
