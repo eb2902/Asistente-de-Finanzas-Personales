@@ -75,15 +75,12 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  // Obtener datos filtrados por fecha
-  const { cashFlow: filteredCashFlow, goalProjections: filteredGoalProjections } = getFilteredData();
+  // Obtener datos filtrados por fecha y meta seleccionada
+  const { cashFlow: filteredCashFlow, goalProjections: displayData } = getFilteredData(selectedGoal);
 
-  // Determinar qué datos mostrar según la meta seleccionada
-  const displayData = selectedGoal 
-    ? filteredGoalProjections 
-    : filteredGoalProjections;
-
-  const selectedGoalData = data.goals.find((g) => g.id === selectedGoal);
+  const selectedGoalData = selectedGoal 
+    ? data.goals.find((g) => g.id === selectedGoal) 
+    : null;
 
   return (
     <Layout>

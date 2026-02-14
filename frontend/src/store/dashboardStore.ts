@@ -28,7 +28,7 @@ interface DashboardState {
   fetchDashboardData: () => Promise<void>;
   refreshData: () => Promise<void>;
   updateGoalProjection: (goalId: string) => void;
-  getFilteredData: () => {
+  getFilteredData: (selectedGoalId: string | null) => {
     cashFlow: { date: string; income: number; expense: number }[];
     goalProjections: { month: string; amount: number; target: number }[];
   };
@@ -74,7 +74,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   setDateRange: (dateRange) => set({ dateRange }),
   setSelectedGoal: (goalId) => set({ selectedGoal: goalId }),
 
-  getFilteredData: () => {
+  getFilteredData: (selectedGoalId) => {
     const state = get();
     if (!state.data) return { cashFlow: [], goalProjections: [] };
 
@@ -86,9 +86,27 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       return itemDate >= startDate && itemDate <= endDate;
     });
 
-    // Filtrar goalProjections por rango de fechas (si es que tienen fechas)
-    // Para este ejemplo, simplemente devolvemos las proyecciones completas
-    const filteredGoalProjections = state.data.goalProjections;
+    // Determinar las proyecciones de metas según la meta seleccionada
+    let filteredGoalProjections: { month: string; amount: number; target: number }[];
+    
+    if (selectedGoalId) {
+      // Si hay una meta seleccionada, generar proyección específica para esa meta
+      const selectedGoal = state.data.goals.find(g => g.id === selectedGoalId);
+      if (selectedGoal) {
+        filteredGoalProjections = generateCompoundProjection(
+          selectedGoal.currentAmount,
+          selectedGoal.interestRate,
+          12,
+          selectedGoal.targetAmount,
+          selectedGoal.compoundFrequency
+        );
+      } else {
+        filteredGoalProjections = state.data.goalProjections;
+      }
+    } else {
+      // Si no hay meta seleccionada, combinar todas las metas
+      filteredGoalProjections = generateCombinedGoalProjections(state.data.goals);
+    }
 
     return {
       cashFlow: filteredCashFlow,
@@ -447,6 +465,38 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     }
   },
 }));
+
+// Función auxiliar para generar proyección combinada de todas las metas
+function generateCombinedGoalProjections(goals: Goal[]): { month: string; amount: number; target: number }[] {
+  if (!goals || goals.length === 0) {
+    return [
+      { month: 'Ene', amount: 0, target: 0 },
+      { month: 'Feb', amount: 0, target: 0 },
+      { month: 'Mar', amount: 0, target: 0 },
+      { month: 'Abr', amount: 0, target: 0 },
+      { month: 'May', amount: 0, target: 0 },
+      { month: 'Jun', amount: 0, target: 0 },
+    ];
+  }
+
+  // Calcular totales combinados
+  const totalCurrentAmount = goals.reduce((sum, g) => sum + g.currentAmount, 0);
+  const totalTargetAmount = goals.reduce((sum, g) => sum + g.targetAmount, 0);
+  
+  // Usar tasa de interés promedio ponderada
+  const totalWeight = goals.reduce((sum, g) => sum + g.targetAmount, 0);
+  const weightedRate = goals.reduce((sum, g) => sum + (g.interestRate * g.targetAmount), 0) / totalWeight;
+
+  const projection = generateCompoundProjection(
+    totalCurrentAmount,
+    weightedRate,
+    12,
+    totalTargetAmount,
+    12
+  );
+
+  return projection;
+}
 
 // Función auxiliar para generar proyecciones de metas basadas en datos reales
 function generateRealGoalProjections(goals: Goal[]): { month: string; amount: number; target: number }[] {
