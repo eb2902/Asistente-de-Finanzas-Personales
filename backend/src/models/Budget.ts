@@ -6,7 +6,7 @@ export class Budget {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column()
+  @Column({ type: 'varchar', length: 100 })
   category!: string; // Category name (e.g., "Alimentación", "Transporte")
 
   @Column('decimal', { precision: 10, scale: 2 })
@@ -15,7 +15,7 @@ export class Budget {
   @Column({ type: 'varchar', length: 7, default: null })
   month?: string; // Month in YYYY-MM format (optional - if not set, applies to all months)
 
-  @Column()
+  @Column({ type: 'uuid' })
   userId!: string;
 
   @ManyToOne(() => User)
