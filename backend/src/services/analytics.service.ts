@@ -77,15 +77,28 @@ export class AnalyticsService {
 
   /**
    * Obtiene los datos mensuales de gastos para los últimos N meses
+   * @param userId - ID del usuario
+   * @param months - Número de meses hacia atrás (por defecto 3)
+   * @param startDate - Fecha de inicio opcional (YYYY-MM-DD)
+   * @param endDate - Fecha de fin opcional (YYYY-MM-DD)
    */
-  async getMonthlyExpenses(userId: string, months: number = 3): Promise<MonthlyData[]> {
+  async getMonthlyExpenses(userId: string, months: number = 3, startDate?: string, endDate?: string): Promise<MonthlyData[]> {
     try {
-      // Calcular la fecha de inicio en JavaScript para evitar problemas con INTERVAL en TypeORM
-      const startDate = new Date();
-      startDate.setMonth(startDate.getMonth() - months);
-      const startDateStr = startDate.toISOString().slice(0, 10); // YYYY-MM-DD
-      
-      const result = await this.transactionRepository
+      // Determinar la fecha de inicio
+      let startDateStr: string;
+      if (startDate && endDate) {
+        startDateStr = startDate;
+      } else if (startDate) {
+        startDateStr = startDate;
+      } else {
+        // Calcular la fecha de inicio en JavaScript para evitar problemas con INTERVAL en TypeORM
+        const calculatedStartDate = new Date();
+        calculatedStartDate.setMonth(calculatedStartDate.getMonth() - months);
+        startDateStr = calculatedStartDate.toISOString().slice(0, 10); // YYYY-MM-DD
+      }
+
+      // Build query with optional date range
+      const queryBuilder = this.transactionRepository
         .createQueryBuilder('t')
         .select("TO_CHAR(t.date, 'YYYY-MM')", 'month')
         .addSelect('SUM(t.amount)', 'total')
@@ -93,7 +106,13 @@ export class AnalyticsService {
         .where('t.userId = :userId', { userId })
         .andWhere('t.type = :type', { type: 'expense' })
         .andWhere('t.date >= :startDate', { startDate: startDateStr })
-        .andWhere('t.date IS NOT NULL')
+        .andWhere('t.date IS NOT NULL');
+
+      if (endDate) {
+        queryBuilder.andWhere('t.date <= :endDate', { endDate });
+      }
+
+      const result = await queryBuilder
         .groupBy("TO_CHAR(t.date, 'YYYY-MM')")
         .orderBy('month', 'ASC')
         .getRawMany();
@@ -181,6 +200,41 @@ export class AnalyticsService {
       }));
     } catch (error) {
       logger.error('Error getting historical category expenses:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtiene los datos de gastos por categoría para un rango de fechas específico
+   * @param userId - ID del usuario
+   * @param startDate - Fecha de inicio (YYYY-MM-DD)
+   * @param endDate - Fecha de fin (YYYY-MM-DD)
+   */
+  async getCategoryExpensesInRange(userId: string, startDate: string, endDate: string): Promise<CategoryData[]> {
+    try {
+      const result = await this.transactionRepository
+        .createQueryBuilder('t')
+        .select('t.category', 'category')
+        .addSelect('SUM(t.amount)', 'total')
+        .addSelect('COUNT(t.id)', 'count')
+        .addSelect('AVG(t.amount)', 'average')
+        .where('t.userId = :userId', { userId })
+        .andWhere('t.type = :type', { type: 'expense' })
+        .andWhere('t.date >= :startDate', { startDate })
+        .andWhere('t.date <= :endDate', { endDate })
+        .andWhere('t.category IS NOT NULL')
+        .groupBy('t.category')
+        .orderBy('total', 'DESC')
+        .getRawMany();
+
+      return result.map((row: { category: string; total: string; count: string; average: string }) => ({
+        category: row.category,
+        total: parseFloat(row.total) || 0,
+        count: parseInt(row.count) || 0,
+        average: parseFloat(row.average) || 0,
+      }));
+    } catch (error) {
+      logger.error('Error getting category expenses in range:', error);
       throw error;
     }
   }
@@ -351,11 +405,25 @@ export class AnalyticsService {
   /**
    * Detecta anomalías en los gastos actuales vs promedio histórico
    * Compara el mes actual con el promedio de los últimos 3 meses
+   * @param userId - ID del usuario
+   * @param startDate - Fecha de inicio opcional (YYYY-MM-DD)
+   * @param endDate - Fecha de fin opcional (YYYY-MM-DD)
    */
-  async detectAnomalies(userId: string): Promise<AnomaliesData> {
+  async detectAnomalies(userId: string, startDate?: string, endDate?: string): Promise<AnomaliesData> {
     try {
-      const currentMonthData = await this.getCurrentMonthCategoryExpenses(userId);
-      const historicalData = await this.getHistoricalCategoryExpenses(userId);
+      // Usar las fechas proporcionadas o el mes actual por defecto
+      let currentMonthData: CategoryData[];
+      let historicalData: CategoryData[];
+      
+      if (startDate && endDate) {
+        // Si se proporcionan fechas, usarlas para los datos actuales
+        currentMonthData = await this.getCategoryExpensesInRange(userId, startDate, endDate);
+        // Los datos históricos siguen siendo los últimos 3 meses
+        historicalData = await this.getHistoricalCategoryExpenses(userId);
+      } else {
+        currentMonthData = await this.getCurrentMonthCategoryExpenses(userId);
+        historicalData = await this.getHistoricalCategoryExpenses(userId);
+      }
 
       const alerts: AnomalyAlert[] = [];
       const analyzedTransactions = currentMonthData.reduce((sum, cat) => sum + cat.count, 0);
@@ -536,10 +604,14 @@ export class AnalyticsService {
 
   /**
    * Obtiene datos para gráfico de tendencia mensual
+   * @param userId - ID del usuario
+   * @param months - Número de meses hacia atrás (por defecto 6)
+   * @param startDate - Fecha de inicio opcional (YYYY-MM-DD)
+   * @param endDate - Fecha de fin opcional (YYYY-MM-DD)
    */
-  async getMonthlyTrend(userId: string, months: number = 6): Promise<MonthlyTrendData[]> {
+  async getMonthlyTrend(userId: string, months: number = 6, startDate?: string, endDate?: string): Promise<MonthlyTrendData[]> {
     try {
-      const monthlyData = await this.getMonthlyExpenses(userId, months);
+      const monthlyData = await this.getMonthlyExpenses(userId, months, startDate, endDate);
 
       return monthlyData.map((month, index) => {
         const previousMonth = index > 0 ? monthlyData[index - 1].total : month.total;
@@ -566,10 +638,21 @@ export class AnalyticsService {
   /**
    * Obtiene datos de comparación presupuesto vs real
    * Usa presupuestos personalizados del usuario, o fallback histórico si no existen
+   * @param userId - ID del usuario
+   * @param startDate - Fecha de inicio opcional (YYYY-MM-DD)
+   * @param endDate - Fecha de fin opcional (YYYY-MM-DD)
    */
-  async getBudgetComparison(userId: string): Promise<BudgetComparison[]> {
+  async getBudgetComparison(userId: string, startDate?: string, endDate?: string): Promise<BudgetComparison[]> {
     try {
-      const currentMonthData = await this.getCurrentMonthCategoryExpenses(userId);
+      // Usar las fechas proporcionadas o el mes actual por defecto
+      let currentMonthData: CategoryData[];
+      
+      if (startDate && endDate) {
+        currentMonthData = await this.getCategoryExpensesInRange(userId, startDate, endDate);
+      } else {
+        currentMonthData = await this.getCurrentMonthCategoryExpenses(userId);
+      }
+      
       const historicalData = await this.getHistoricalCategoryExpenses(userId);
       const budgetRepository = AppDataSource.getRepository(Budget);
 

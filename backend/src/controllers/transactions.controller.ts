@@ -21,6 +21,35 @@ const categorizeTransactionSchema = Joi.object({
   description: Joi.string().min(1).max(255).required(),
 });
 
+// Date range validation schema for query params
+const dateRangeSchema = Joi.object({
+  startDate: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  endDate: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).optional(),
+}).with('startDate', 'endDate');
+
+// Helper function to validate date range query params
+function validateDateRange(query: Record<string, unknown>): { 
+  valid: boolean; 
+  startDate?: string; 
+  endDate?: string; 
+  error?: string;
+} {
+  const { error, value } = dateRangeSchema.validate(query);
+  
+  if (error) {
+    return { 
+      valid: false, 
+      error: error.details.map(d => d.message).join(', ') 
+    };
+  }
+  
+  return { 
+    valid: true, 
+    startDate: value.startDate, 
+    endDate: value.endDate 
+  };
+}
+
 export class TransactionsController {
   private nlpService = new NLPCategorizationService();
   private analyticsService = new AnalyticsService();
@@ -123,13 +152,36 @@ export class TransactionsController {
       const limit = parseInt(req.query.limit as string) || 10;
       const offset = (page - 1) * limit;
 
+      // Validate date range query params
+      const dateValidation = validateDateRange(req.query as Record<string, unknown>);
+      if (!dateValidation.valid) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid date range',
+          error: dateValidation.error
+        });
+        return;
+      }
+
+      const { startDate, endDate } = dateValidation;
+
+      // Build query with optional date filtering
       const transactionRepository = AppDataSource.getRepository(Transaction);
-      const [transactions, total] = await transactionRepository.findAndCount({
-        where: { userId },
-        order: { createdAt: 'DESC' },
-        take: limit,
-        skip: offset
-      });
+      const queryBuilder = transactionRepository.createQueryBuilder('t')
+        .where('t.userId = :userId', { userId });
+
+      if (startDate && endDate) {
+        queryBuilder.andWhere('t.date >= :startDate AND t.date <= :endDate', { 
+          startDate, 
+          endDate 
+        });
+      }
+
+      const [transactions, total] = await queryBuilder
+        .orderBy('t.createdAt', 'DESC')
+        .take(limit)
+        .skip(offset)
+        .getManyAndCount();
 
       res.json({
         success: true,
@@ -140,7 +192,8 @@ export class TransactionsController {
             limit,
             total,
             pages: Math.ceil(total / limit)
-          }
+          },
+          dateRange: startDate && endDate ? { startDate, endDate } : undefined
         }
       });
 
@@ -344,26 +397,56 @@ export class TransactionsController {
    */
   async getTransactionStats(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as { user?: { id: string } }).user?.id;
+      const userId = (req as { user?: { id: string } }).user?.id || '';
+
+      // Validate date range query params
+      const dateValidation = validateDateRange(req.query as Record<string, unknown>);
+      if (!dateValidation.valid) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid date range',
+          error: dateValidation.error
+        });
+        return;
+      }
+
+      const { startDate, endDate } = dateValidation;
+
+      // Build base query conditions
+      const getDateCondition = () => {
+        if (startDate && endDate) {
+          return 'AND t.date >= :startDate AND t.date <= :endDate';
+        }
+        return '';
+      };
+
+      const params: Record<string, string> = { userId };
+      if (startDate && endDate) {
+        params.startDate = startDate;
+        params.endDate = endDate;
+      }
+
       const transactionRepository = AppDataSource.getRepository(Transaction);
 
-      // Get total income and expenses
+      // Get total income and expenses with optional date filtering
       const [totalIncome, totalExpenses] = await Promise.all([
         transactionRepository
           .createQueryBuilder('t')
           .select('SUM(t.amount)', 'total')
           .where('t.userId = :userId', { userId })
           .andWhere('t.type = :type', { type: 'income' })
+          .andWhere(`t.date IS NOT NULL ${getDateCondition()}`, params)
           .getRawOne(),
         transactionRepository
           .createQueryBuilder('t')
           .select('SUM(t.amount)', 'total')
           .where('t.userId = :userId', { userId })
           .andWhere('t.type = :type', { type: 'expense' })
+          .andWhere(`t.date IS NOT NULL ${getDateCondition()}`, params)
           .getRawOne()
       ]);
 
-      // Get category breakdown for expenses
+      // Get category breakdown for expenses with optional date filtering
       const categoryBreakdown = await transactionRepository
         .createQueryBuilder('t')
         .select('t.category', 'category')
@@ -372,6 +455,7 @@ export class TransactionsController {
         .where('t.userId = :userId', { userId })
         .andWhere('t.type = :type', { type: 'expense' })
         .andWhere('t.category IS NOT NULL')
+        .andWhere(`t.date IS NOT NULL ${getDateCondition()}`, params)
         .groupBy('t.category')
         .orderBy('total', 'DESC')
         .getRawMany();
@@ -382,7 +466,8 @@ export class TransactionsController {
           totalIncome: parseFloat(totalIncome?.total || '0'),
           totalExpenses: parseFloat(totalExpenses?.total || '0'),
           balance: parseFloat(totalIncome?.total || '0') - parseFloat(totalExpenses?.total || '0'),
-          categoryBreakdown
+          categoryBreakdown,
+          dateRange: startDate && endDate ? { startDate, endDate } : undefined
         }
       });
 
@@ -426,11 +511,25 @@ export class TransactionsController {
     try {
       const userId = (req as { user?: { id: string } }).user?.id || '';
 
-      const anomalies = await this.analyticsService.detectAnomalies(userId);
+      // Validate date range query params
+      const dateValidation = validateDateRange(req.query as Record<string, unknown>);
+      if (!dateValidation.valid) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid date range',
+          error: dateValidation.error
+        });
+        return;
+      }
+
+      const { startDate, endDate } = dateValidation;
+
+      const anomalies = await this.analyticsService.detectAnomalies(userId, startDate, endDate);
 
       res.json({
         success: true,
-        data: anomalies
+        data: anomalies,
+        dateRange: startDate && endDate ? { startDate, endDate } : undefined
       });
 
     } catch (error) {
@@ -473,11 +572,25 @@ export class TransactionsController {
       const userId = (req as { user?: { id: string } }).user?.id || '';
       const months = parseInt(req.query.months as string) || 6;
 
-      const trend = await this.analyticsService.getMonthlyTrend(userId, months);
+      // Validate date range query params
+      const dateValidation = validateDateRange(req.query as Record<string, unknown>);
+      if (!dateValidation.valid) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid date range',
+          error: dateValidation.error
+        });
+        return;
+      }
+
+      const { startDate, endDate } = dateValidation;
+
+      const trend = await this.analyticsService.getMonthlyTrend(userId, months, startDate, endDate);
 
       res.json({
         success: true,
-        data: trend
+        data: trend,
+        dateRange: startDate && endDate ? { startDate, endDate } : undefined
       });
 
     } catch (error) {
@@ -496,11 +609,25 @@ export class TransactionsController {
     try {
       const userId = (req as { user?: { id: string } }).user?.id || '';
 
-      const comparison = await this.analyticsService.getBudgetComparison(userId);
+      // Validate date range query params
+      const dateValidation = validateDateRange(req.query as Record<string, unknown>);
+      if (!dateValidation.valid) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid date range',
+          error: dateValidation.error
+        });
+        return;
+      }
+
+      const { startDate, endDate } = dateValidation;
+
+      const comparison = await this.analyticsService.getBudgetComparison(userId, startDate, endDate);
 
       res.json({
         success: true,
-        data: comparison
+        data: comparison,
+        dateRange: startDate && endDate ? { startDate, endDate } : undefined
       });
 
     } catch (error) {
